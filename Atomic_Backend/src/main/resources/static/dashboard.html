@@ -20,7 +20,22 @@
             <a href="/transaction.html">New transfer</a>
             <a href="/rules.html">Rules</a>
             <a href="/alerts.html">Alerts</a>
-            <button class="link-button" data-logout type="button">Logout</button>
+            <details class="user-menu">
+                <summary class="link-button user-menu__trigger" aria-label="Open account menu">
+                    <span class="user-menu__avatar" data-user-initials>AU</span>
+                    <span data-user-first-name>User</span>
+                </summary>
+                <div class="user-menu__panel">
+                    <p class="user-menu__name" data-user-name>Atomic user</p>
+                    <p class="user-menu__meta" data-user-email>you@example.com</p>
+                    <p class="user-menu__meta" data-account-mask>••••0000</p>
+                    <div class="user-menu__actions">
+                        <a href="/transaction.html">New transfer</a>
+                        <a href="/rules.html">Rules</a>
+                        <button class="link-button" data-logout type="button">Logout</button>
+                    </div>
+                </div>
+            </details>
         </nav>
     </div>
 </header>
@@ -39,7 +54,7 @@
         <section class="panel panel--wide">
             <div class="panel__head">
                 <h2>Available wallet balance</h2>
-                <p>Balance returned by the backend at login.</p>
+
             </div>
             <div class="panel__body">
                 <p class="balance" data-wallet-balance>₹0.00</p>
@@ -71,6 +86,16 @@
             <h2>Monitoring rules</h2>
             <p>Review the rule catalogue already provided by the project.</p>
             <a href="/rules.html">Open rules →</a>
+        </section>
+
+        <section class="panel panel--wide" aria-labelledby="recent-heading">
+            <div class="panel__head">
+                <h2 id="recent-heading">Recent transfers</h2>
+                <p id="recent-summary">Loading your latest activity...</p>
+            </div>
+            <div class="panel__body" id="recent-transfers">
+                <p class="form-message">No recent transfers yet.</p>
+            </div>
         </section>
     </div>
 </main>
