@@ -8,23 +8,26 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class TransactionProcessing {
+    private final TransactionsRepo trans ;
+    private final AccountBalanceTransferService accountBalanceTransferService;
+
+
     @Autowired
-    TransactionsRepo trans;
-    @Autowired
-    UserRepo user;
+
+    public TransactionProcessing(TransactionsRepo trans, AccountBalanceTransferService accountBalanceTransferService) {
+        this.trans = trans;
+        this.accountBalanceTransferService = accountBalanceTransferService;
+    }
     public String processTransaction(Transactions transaction) {
-
-        //balance = balance - transaction.getAmount();
-        //transaction.setStatus(3);
-        //trans.save(transaction);
-
-//        user.findBalanceByAccountNumber(transaction.getDebitAccountNumber());
-//        user.updateBalanceByAccountNumber(transaction.getDebitAccountNumber(), transaction.getAmount());
-//        user.findBalanceByAccountNumber(transaction.getCreditAccountNumber());
-//        user.updateBalanceByAccountNumber(transaction.getCreditAccountNumber(), transaction.getAmount());
-
-        transaction.setStatus(4);
-        trans.save(transaction);
-        return "Transaction processed successfully!";
+        try {
+            accountBalanceTransferService.transfer(transaction);
+            transaction.setStatus(4); // completed
+            trans.save(transaction);
+            return "Transaction processed successfully!";
+        } catch (AccountBalanceTransferService.BalanceTransferException ex) {
+            transaction.setStatus(5); // failed
+            trans.save(transaction);
+            return "Transaction failed: " + ex.getMessage();
+        }
     }
 }
