@@ -17,15 +17,16 @@ public class TransactionCreation {
     TransactionValidation transValidation;
     @Autowired
     UserRepo userRepo;
+
+
     public String submitTransaction(long debit_account_number, long credit_account_number,
                                     double amount) {
         // Implement transaction processing logic here
         Transactions transaction = new Transactions(debit_account_number, credit_account_number,
                 amount, Instant.now(), 1);
         trans.save(transaction);
-        transValidation.validateTransaction(transaction);
-        return "Transaction ID: " + transaction.getTransID() + " created successfully!";
-    }
+        return transValidation.validateTransaction(transaction);
+        }
     public List<Transactions> getAllTransactions() {
         return trans.findAll();
     }
