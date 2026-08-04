@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Atomic account dashboard">
+    <title>Dashboard | Atomic</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar__inner">
+        <a class="brand" href="/dashboard.html">
+            <span class="brand__mark">A</span>
+            <span class="brand__text">ATOMIC</span>
+        </a>
+        <nav class="nav" aria-label="Account navigation">
+            <a href="/">Home</a>
+            <a href="/dashboard.html" aria-current="page">Dashboard</a>
+            <a href="/transaction.html">New transfer</a>
+            <a href="/rules.html">Rules</a>
+            <a href="/alerts.html">Alerts</a>
+            <button class="link-button" data-logout type="button">Logout</button>
+        </nav>
+    </div>
+</header>
+
+<main class="shell">
+    <header class="page-heading">
+        <div>
+            <p class="eyebrow">Account overview</p>
+            <h1>Welcome, <span data-user-name>Atomic user</span>.</h1>
+            <p>Your authenticated account is used automatically as the debit account for every transfer.</p>
+        </div>
+        <span class="session-pill">Session active</span>
+    </header>
+
+    <div class="grid">
+        <section class="panel panel--wide">
+            <div class="panel__head">
+                <h2>Available wallet balance</h2>
+                <p>Balance returned by the backend at login.</p>
+            </div>
+            <div class="panel__body">
+                <p class="balance" data-wallet-balance>₹0.00</p>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel__head">
+                <h2>Account details</h2>
+                <p>Identity held by your authenticated session.</p>
+            </div>
+            <div class="panel__body">
+                <dl class="detail-list">
+                    <div><dt>Account number</dt><dd data-account-number>—</dd></div>
+                    <div><dt>Email</dt><dd data-user-email>—</dd></div>
+                </dl>
+            </div>
+        </section>
+
+        <section class="panel action-card">
+            <span class="action-card__number">01</span>
+            <h2>Make a transfer</h2>
+            <p>Enter a destination and amount. Your debit account is inserted by the server session.</p>
+            <a href="/transaction.html">Start transfer →</a>
+        </section>
+
+        <section class="panel action-card">
+            <span class="action-card__number">02</span>
+            <h2>Monitoring rules</h2>
+            <p>Review the rule catalogue already provided by the project.</p>
+            <a href="/rules.html">Open rules →</a>
+        </section>
+    </div>
+</main>
+
+<footer class="footer">Atomic · Authenticated payment workspace</footer>
+<script src="/js/api.js"></script>
+<script src="/js/account-page.js"></script>
+</body>
+</html>
