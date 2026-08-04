@@ -1,15 +1,52 @@
 package com.example.Atomic.Service;
 
+import com.example.Atomic.Model.Rules;
+import com.example.Atomic.Repository.RulesRepo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+import java.util.List;
+
+@Service
 public class RulesProcessing {
-    public String getRules() {
-        // Implement rules update logic here
-        return "Rules updated successfully!";
+    @Autowired
+    RulesRepo rules;
+    public List<Rules> getRules() {
+        return rules.findAll();
     }
-    public String updateRulesStatus() {
-        // Implement rules status update logic here
-        return "Rules status updated successfully!";
+    public List<Rules> getRulesByStatus(int status) {
+        return rules.findAllByAlertStatusEquals(status);
     }
+    public List<Rules> getRulesBySeverity(int severity) {
+        return rules.findAllByAlertSeverityEquals(severity);
+    }
+    public String updateRulesSeverityByID(long id, int severity) {
+        Rules rule = rules.findById(id).orElse(null);
+        if (rule != null) {
+            rule.setAlertSeverity(severity);
+            rules.save(rule);
+            return "Rules updated successfully!";
+        }
+        return "Rule not found!";
+    }
+    public String updateRulesNameByID(long id, String name) {
+        Rules rule = rules.findById(id).orElse(null);
+        if (rule != null) {
+            rule.setAlertName(name);
+            rules.save(rule);
+            return "Rules updated successfully!";
+        }
+        return "Rule not found!";
+    }
+    public String updateRulesStatusByID(long id, int status) {
+        Rules rule = rules.findById(id).orElse(null);
+        if (rule != null) {
+            rule.setAlertStatus(status);
+            rules.save(rule);
+            return "Rules updated successfully!";
+        }
+        return "Rule not found!";
+    }
+
 }

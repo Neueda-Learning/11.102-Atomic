@@ -1,39 +1,58 @@
 package com.example.Atomic.Model;
 
-public class Alert {
-    // Alert ID, Severity, Status --> Opened, Acknowledged, etc; Alert Date, Alert Time, Alert Resolution Time
-    private long alert_id;
-    private int severity;
-    private int status;
-    private String alert_date;
-    private String alert_time;
-    private long resolution_time;
+import jakarta.persistence.*;
+import jdk.jfr.DataAmount;
+import org.springframework.stereotype.Component;
 
-    Alert(long alert_id, int severity, int status, String alert_date, String alert_time,
-          long resolution_time) {
-        this.alert_id = alert_id;
-        this.severity = severity;
+import java.time.Instant;
+
+@Component
+@Entity
+public class Alert {
+    // Alert ID, Severity, Status --> Opened, Acknowledged, etc; Alert Time, Resolution Time
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "alert_gen_id")
+    private long alertGenID;
+    @Column(name = "alert_id")
+    private long alertID;
+    //@Column(name = "severity")
+    //private int severity;
+    @Column(name = "status")
+    private int status;
+    @Column(name = "alert_time")
+    private Instant alertTime;
+    //private String alert_date;
+    @Column(name = "resolution_time")
+    private Instant resolutionTime;
+
+    public Alert() {}
+
+    public Alert(long alertID, int status, Instant alert_time,
+          Instant resolution_time) {
+        this.alertID = alertID;
+        //this.severity = severity;
         this.status = status;
-        this.alert_date = alert_date;
-        this.alert_time = alert_time;
-        this.resolution_time = resolution_time;
+        //this.alert_date = alert_date;
+        this.alertTime = alert_time;
+        this.resolutionTime = resolution_time;
     }
 
     public long getAlert_id() {
-        return alert_id;
+        return alertID;
     }
 
     public void setAlert_id(long alert_id) {
-        this.alert_id = alert_id;
+        this.alertID = alert_id;
     }
 
-    public int getSeverity() {
-        return severity;
-    }
+    //public int getSeverity() {
+    //    return severity;
+    //}
 
-    public void setSeverity(int severity) {
-        this.severity = severity;
-    }
+   // public void setSeverity(int severity) {
+    //    this.severity = severity;
+   // }
 
     public int getStatus() {
         return status;
@@ -43,27 +62,27 @@ public class Alert {
         this.status = status;
     }
 
-    public String getAlert_date() {
-        return alert_date;
+    //public String getAlert_date() {
+        //return alert_date;
+   // }
+
+    //public void setAlert_date(String alert_date) {
+    //    this.alert_date = alert_date;
+    //}
+
+    public Instant getAlert_time() {
+        return alertTime;
     }
 
-    public void setAlert_date(String alert_date) {
-        this.alert_date = alert_date;
+    public void setAlert_time(Instant alert_time) {
+        this.alertTime = alert_time;
     }
 
-    public String getAlert_time() {
-        return alert_time;
+    public Instant getResolution_time() {
+        return resolutionTime;
     }
 
-    public void setAlert_time(String alert_time) {
-        this.alert_time = alert_time;
-    }
-
-    public long getResolution_time() {
-        return resolution_time;
-    }
-
-    public void setResolution_time(long resolution_time) {
-        this.resolution_time = resolution_time;
+    public void setResolution_time(Instant resolution_time) {
+        this.resolutionTime = resolution_time;
     }
 }

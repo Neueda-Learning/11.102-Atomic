@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Review and update Atomic monitoring rules">
+    <script>
+        if (!sessionStorage.getItem("atomic.v2.user")) {
+            location.replace("/login.html?returnTo=%2Frules.html");
+        }
+    </script>
+    <title>Rules | Atomic</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-page="rules">
+<header class="topbar">
+    <div class="topbar__inner">
+        <a class="brand" href="/" aria-label="Atomic home">
+            <span class="brand__mark">A</span>
+            <span class="brand__text">ATOMIC</span>
+        </a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/" data-nav="home">Home</a>
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="/transaction.html" data-nav="transactions">Transactions</a>
+            <a href="/alerts.html" data-nav="alerts">Alerts</a>
+            <a href="/rules.html" data-nav="rules">Rules</a>
+            <button class="nav-action" data-logout type="button">Logout</button>
+        </nav>
+    </div>
+</header>
+
+<main class="page-shell">
+    <header class="page-heading">
+        <div>
+            <p class="eyebrow">Rule configuration</p>
+            <h1 class="page-title">Shape how Atomic detects risk.</h1>
+            <p class="page-subtitle">
+                Fetch the persisted rule catalogue and update names, activation states,
+                and risk severities through the Spring backend.
+            </p>
+        </div>
+        <span class="connection-pill">Live backend data</span>
+    </header>
+
+    <div class="mock-banner">
+        <strong>Connected mode:</strong>
+        <span>Fetch reads <code>GET /home/rules</code>; update writes to <code>PUT /home/rules/update</code> and then reloads the saved record.</span>
+    </div>
+
+    <div class="two-column">
+        <section class="panel" aria-labelledby="update-rule-heading">
+            <div class="panel__heading">
+                <div>
+                    <h2 id="update-rule-heading">Update a rule</h2>
+                    <p>Change its enabled state and risk severity.</p>
+                </div>
+            </div>
+            <div class="panel__body">
+                <form id="rule-update-form">
+                    <div class="form-grid">
+                        <div class="form-field form-field--full">
+                            <label for="rule-name">Rule</label>
+                            <select class="select" id="rule-name" required disabled>
+                                <option value="">Fetch rules to begin</option>
+                            </select>
+                        </div>
+                        <div class="form-field form-field--full">
+                            <label for="rule-new-name">Rule name</label>
+                            <input class="input" id="rule-new-name" type="text" maxlength="255" required disabled>
+                        </div>
+                        <div class="form-field">
+                            <label for="rule-status">Status</label>
+                            <select class="select" id="rule-status" required disabled>
+                                <option value="1">Active</option>
+                                <option value="2">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="rule-severity">Severity</label>
+                            <select class="select" id="rule-severity" required disabled>
+                                <option value="1">1 · Low</option>
+                                <option value="2">2 · Medium</option>
+                                <option value="3">3 · High</option>
+                                <option value="4">4 · Critical</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn--primary" id="update-rule" type="submit" disabled>Update rule</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="panel" aria-labelledby="rule-catalogue-heading">
+            <div class="panel__heading">
+                <div>
+                    <h2 id="rule-catalogue-heading">Detection catalogue</h2>
+                    <p>Rules currently stored in the MySQL database.</p>
+                </div>
+                <button class="btn btn--secondary" id="fetch-rules" type="button">Fetch rules</button>
+            </div>
+            <div class="table-toolbar">
+                <span class="table-toolbar__summary" id="rule-summary">No rules fetched.</span>
+                <div class="inline-controls">
+                    <label class="field-label" for="rule-filter">Filter</label>
+                    <select class="select" id="rule-filter">
+                        <option value="all">All rules</option>
+                        <option value="1">Active</option>
+                        <option value="2">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div id="rule-table">
+                <div class="empty-state">
+                    <div>
+                        <span class="empty-state__mark">R</span>
+                        <h3>Fetch the rule catalogue</h3>
+                        <p>The persisted detection controls will be rendered here.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<footer class="footer">Atomic · Rule configuration</footer>
+<script src="/js/common.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/rules.js"></script>
+<script>AtomicApi.bindLogout();</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Atomic transaction failed">
+    <title>Transfer failed | Atomic</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body data-result="failed">
+<main class="result-shell">
+    <section class="result-card" aria-labelledby="result-heading">
+        <span class="result-mark result-mark--failed" aria-hidden="true">!</span>
+        <p class="eyebrow">Processing stopped</p>
+        <h1 id="result-heading">Transfer failed.</h1>
+        <p>The backend returned FAILED. No successful balance transfer should be recorded.</p>
+
+        <dl class="detail-list result-details">
+            <div><dt>Transaction reference</dt><dd id="result-id">—</dd></div>
+            <div><dt>Amount</dt><dd id="result-amount">—</dd></div>
+            <div><dt>From</dt><dd id="result-debit">—</dd></div>
+            <div><dt>To</dt><dd id="result-credit">—</dd></div>
+            <div><dt>Backend status</dt><dd id="result-status">Failed</dd></div>
+        </dl>
+
+        <div class="result-actions">
+            <a class="button button--primary" href="/transaction.html">Try another transfer</a>
+            <a class="button button--secondary" href="/dashboard.html">Return to dashboard</a>
+        </div>
+    </section>
+</main>
+<script src="/js/api.js"></script>
+<script src="/js/result.js"></script>
+</body>
+</html>

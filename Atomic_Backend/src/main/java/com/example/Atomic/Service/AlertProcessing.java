@@ -1,8 +1,9 @@
 package com.example.Atomic.Service;
 
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
 public class AlertProcessing {
     public String getAlert() {
         // Implement alert retrieval logic here

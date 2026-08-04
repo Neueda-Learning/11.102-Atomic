@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Review and update Atomic monitoring alerts">
+    <script>
+        if (!sessionStorage.getItem("atomic.v2.user")) {
+            location.replace("/login.html?returnTo=%2Falerts.html");
+        }
+    </script>
+    <title>Alerts | Atomic</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-page="alerts">
+<header class="topbar">
+    <div class="topbar__inner">
+        <a class="brand" href="/" aria-label="Atomic home">
+            <span class="brand__mark">A</span>
+            <span class="brand__text">ATOMIC</span>
+        </a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/" data-nav="home">Home</a>
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="/transaction.html" data-nav="transactions">Transactions</a>
+            <a href="/alerts.html" data-nav="alerts">Alerts</a>
+            <a href="/rules.html" data-nav="rules">Rules</a>
+            <button class="nav-action" data-logout type="button">Logout</button>
+        </nav>
+    </div>
+</header>
+
+<main class="page-shell">
+    <header class="page-heading">
+        <div>
+            <p class="eyebrow">Alert operations</p>
+            <h1 class="page-title">Review what needs attention.</h1>
+            <p class="page-subtitle">
+                Fetch the current demonstration queue, filter by workflow status, and
+                acknowledge or resolve individual alerts.
+            </p>
+        </div>
+        <span class="demo-pill">Mock fetch data</span>
+    </header>
+
+    <div class="mock-banner">
+        <strong>Demo mode:</strong>
+        <span>Alert fetches use browser-side mock records. Status updates call the existing backend acknowledgement endpoint and update this page locally.</span>
+    </div>
+
+    <div class="two-column">
+        <section class="panel" aria-labelledby="update-alert-heading">
+            <div class="panel__heading">
+                <div>
+                    <h2 id="update-alert-heading">Update alert status</h2>
+                    <p>Move one alert through the review workflow.</p>
+                </div>
+            </div>
+            <div class="panel__body">
+                <form id="alert-update-form">
+                    <div class="form-grid">
+                        <div class="form-field form-field--full">
+                            <label for="alert-id">Alert</label>
+                            <select class="select" id="alert-id" required></select>
+                        </div>
+                        <div class="form-field form-field--full">
+                            <label for="alert-status">New status</label>
+                            <select class="select" id="alert-status" required>
+                                <option value="0">Open</option>
+                                <option value="1">Acknowledged</option>
+                                <option value="2">Resolved</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn--primary" id="update-alert" type="submit">Update alert</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="panel" aria-labelledby="alert-queue-heading">
+            <div class="panel__heading">
+                <div>
+                    <h2 id="alert-queue-heading">Alert queue</h2>
+                    <p>Mock records for frontend development.</p>
+                </div>
+                <button class="btn btn--secondary" id="fetch-alerts" type="button">Fetch alerts</button>
+            </div>
+            <div class="table-toolbar">
+                <span class="table-toolbar__summary" id="alert-summary">No alerts fetched.</span>
+                <div class="inline-controls">
+                    <label class="field-label" for="alert-filter">Filter</label>
+                    <select class="select" id="alert-filter">
+                        <option value="all">All statuses</option>
+                        <option value="0">Open</option>
+                        <option value="1">Acknowledged</option>
+                        <option value="2">Resolved</option>
+                    </select>
+                </div>
+            </div>
+            <div id="alert-table">
+                <div class="empty-state">
+                    <div>
+                        <span class="empty-state__mark">A</span>
+                        <h3>Fetch the alert queue</h3>
+                        <p>The mock monitoring records will be rendered here.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<footer class="footer">Atomic · Alert review</footer>
+<script src="/js/common.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/alerts.js"></script>
+<script>AtomicApi.bindLogout();</script>
+</body>
+</html>

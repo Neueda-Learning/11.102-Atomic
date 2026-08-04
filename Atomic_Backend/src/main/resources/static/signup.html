@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create an Atomic account">
+    <title>Sign up | Atomic</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar__inner">
+        <a class="brand" href="/" aria-label="Atomic home">
+            <span class="brand__mark">A</span>
+            <span class="brand__text">ATOMIC</span>
+        </a>
+        <nav class="nav" aria-label="Public navigation">
+            <a href="/">Home</a>
+            <a href="/login.html">Login</a>
+            <a href="/signup.html" aria-current="page">Sign up</a>
+        </nav>
+    </div>
+</header>
+<main class="auth-shell">
+    <section class="auth-card" aria-labelledby="signup-heading">
+        <div class="auth-card__intro">
+            <a class="brand" href="/" aria-label="Atomic home">
+                <span class="brand__mark">A</span>
+                <span>ATOMIC</span>
+            </a>
+            <div>
+                <p class="eyebrow">New wallet</p>
+                <h1>One account. Every transfer visible.</h1>
+                <p>Create a demonstration wallet and receive an account number from the backend.</p>
+            </div>
+            <small>Your account number is generated after signup.</small>
+        </div>
+
+        <div class="auth-card__form">
+            <p class="eyebrow">Get started</p>
+            <h2 id="signup-heading">Create account</h2>
+            <p class="subcopy">Enter only the details required by the current signup endpoint.</p>
+
+            <form class="form" id="signup-form">
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="first-name">First name</label>
+                        <input id="first-name" type="text" autocomplete="given-name" required>
+                    </div>
+                    <div class="field">
+                        <label for="last-name">Last name</label>
+                        <input id="last-name" type="text" autocomplete="family-name" required>
+                    </div>
+                    <div class="field field--full">
+                        <label for="signup-email">Email address</label>
+                        <input id="signup-email" type="email" autocomplete="username"
+                               placeholder="you@example.com" required>
+                    </div>
+                    <div class="field field--full">
+                        <label for="signup-password">Password</label>
+                        <input id="signup-password" type="password" minlength="6"
+                               autocomplete="new-password" required>
+                    </div>
+                    <div class="field field--full">
+                        <label for="opening-balance">Opening balance (INR)</label>
+                        <input id="opening-balance" type="number" min="0" step="0.01"
+                               value="10000.00" required>
+                        <p class="field-note">This field exists because the current demonstration backend accepts an opening balance.</p>
+                    </div>
+                </div>
+                <button class="button button--primary" id="signup-button" type="submit">Create account</button>
+                <p class="form-message" id="signup-message" aria-live="polite"></p>
+            </form>
+
+            <p class="auth-switch">Already registered? <a href="/login.html">Sign in</a></p>
+        </div>
+    </section>
+</main>
+<script src="/js/api.js"></script>
+<script src="/js/signup.js"></script>
+</body>
+</html>
