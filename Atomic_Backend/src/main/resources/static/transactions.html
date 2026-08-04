@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Submit and fetch Atomic transactions">
+    <script>
+        location.replace("/transaction.html");
+    </script>
+    <title>Transactions | Atomic</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-page="transactions">
+<header class="topbar">
+    <div class="topbar__inner">
+        <a class="brand" href="/" aria-label="Atomic home">
+            <span class="brand__mark">A</span>
+            <span class="brand__text">ATOMIC</span>
+        </a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/" data-nav="home">Home</a>
+            <a href="/transactions.html" data-nav="transactions">Transactions</a>
+            <a href="/alerts.html" data-nav="alerts">Alerts</a>
+            <a href="/rules.html" data-nav="rules">Rules</a>
+        </nav>
+    </div>
+</header>
+
+<main class="page-shell">
+    <header class="page-heading">
+        <div>
+            <p class="eyebrow">Transaction operations</p>
+            <h1 class="page-title">Submit and inspect activity.</h1>
+            <p class="page-subtitle">
+                Create a transaction, follow every persisted processing state, or search
+                the ledger using any of the backend's supported filters.
+            </p>
+        </div>
+        <span class="connection-pill">Live backend workflow</span>
+    </header>
+
+    <div class="two-column">
+        <section class="panel" aria-labelledby="submit-heading">
+            <div class="panel__heading">
+                <div>
+                    <h2 id="submit-heading">New transaction</h2>
+                    <p>Send a transfer to the processing endpoint.</p>
+                </div>
+            </div>
+            <div class="panel__body">
+                <form id="transaction-form">
+                    <div class="form-grid">
+                        <div class="form-field form-field--full">
+                            <label for="debit-account">Debit account number</label>
+                            <!-- Fixed 16-digit validation disabled:
+                                 pattern="[0-9]{16}" minlength="16" maxlength="16" -->
+                            <input class="input" id="debit-account" name="debitAccount" type="text"
+                                   inputmode="numeric" pattern="[0-9]+"
+                                   placeholder="e.g. 1000000000000001" required>
+                        </div>
+                        <div class="form-field form-field--full">
+                            <label for="credit-account">Credit account number</label>
+                            <!-- Fixed 16-digit validation disabled:
+                                 pattern="[0-9]{16}" minlength="16" maxlength="16" -->
+                            <input class="input" id="credit-account" name="creditAccount" type="text"
+                                   inputmode="numeric" pattern="[0-9]+"
+                                   placeholder="e.g. 2000000000000002" required>
+                        </div>
+                        <div class="form-field form-field--full">
+                            <label for="transaction-amount">Amount (INR)</label>
+                            <input class="input" id="transaction-amount" name="amount" type="number"
+                                   min="0.01" step="0.01" placeholder="0.00" required>
+                            <p class="form-note">The backend assigns the transaction ID, timestamp, and initial status.</p>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn--primary" id="submit-transaction" type="submit">Submit transaction</button>
+                        <button class="btn btn--secondary" type="reset">Clear</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="panel" aria-labelledby="fetch-heading">
+            <div class="panel__heading">
+                <div>
+                    <h2 id="fetch-heading">Fetch transactions</h2>
+                    <p>Select one search method and provide its criteria.</p>
+                </div>
+            </div>
+            <div class="panel__body">
+                <form id="fetch-form">
+                    <div class="form-field">
+                        <label for="search-mode">Search by</label>
+                        <select class="select" id="search-mode" name="searchMode">
+                            <option value="debit">Debit account number</option>
+                            <option value="credit">Credit account number</option>
+                            <option value="amount">Amount range</option>
+                            <option value="date">Date and time range</option>
+                        </select>
+                    </div>
+
+                    <div class="mode-fields" data-mode-fields="debit">
+                        <div class="form-field form-field--full">
+                            <label for="fetch-debit">Debit account number</label>
+                            <input class="input" id="fetch-debit" type="text" inputmode="numeric"
+                                   pattern="[0-9]+" placeholder="Enter the debit account" required>
+                        </div>
+                    </div>
+
+                    <div class="mode-fields" data-mode-fields="credit" hidden>
+                        <div class="form-field form-field--full">
+                            <label for="fetch-credit">Credit account number</label>
+                            <input class="input" id="fetch-credit" type="text" inputmode="numeric"
+                                   pattern="[0-9]+" placeholder="Enter the credit account">
+                        </div>
+                    </div>
+
+                    <div class="mode-fields" data-mode-fields="amount" hidden>
+                        <div class="form-field">
+                            <label for="amount-after">Minimum amount</label>
+                            <input class="input" id="amount-after" type="number" min="0" step="0.01" placeholder="0.00">
+                        </div>
+                        <div class="form-field">
+                            <label for="amount-before">Maximum amount</label>
+                            <input class="input" id="amount-before" type="number" min="0" step="0.01" placeholder="10000.00">
+                        </div>
+                    </div>
+
+                    <div class="mode-fields" data-mode-fields="date" hidden>
+                        <div class="form-field">
+                            <label for="date-after">From</label>
+                            <input class="input" id="date-after" type="datetime-local">
+                        </div>
+                        <div class="form-field">
+                            <label for="date-before">To</label>
+                            <input class="input" id="date-before" type="datetime-local">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn--primary" id="fetch-transactions" type="submit">Fetch transactions</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <section class="panel live-workflow is-hidden" id="live-workflow" aria-labelledby="workflow-heading" aria-live="polite">
+        <div class="panel__heading">
+            <div>
+                <p class="eyebrow workflow-eyebrow">Live processing</p>
+                <h2 id="workflow-heading">Transaction workflow</h2>
+                <p id="workflow-summary">Waiting for a transaction to be submitted.</p>
+            </div>
+            <div id="workflow-status"></div>
+        </div>
+        <div class="panel__body">
+            <div class="workflow-meta">
+                <div><span>Transaction</span><strong id="workflow-id">—</strong></div>
+                <div><span>Amount</span><strong id="workflow-amount">—</strong></div>
+                <div><span>Last checked</span><strong id="workflow-updated">—</strong></div>
+            </div>
+            <ol class="workflow-steps" aria-label="Payment processing states">
+                <li class="workflow-step" data-workflow-step="1">
+                    <span class="workflow-step__mark">1</span>
+                    <div><strong>Created</strong><span>Payment persisted</span></div>
+                </li>
+                <li class="workflow-step" data-workflow-step="2">
+                    <span class="workflow-step__mark">2</span>
+                    <div><strong>Validated</strong><span>Checks passed</span></div>
+                </li>
+                <li class="workflow-step" data-workflow-step="3">
+                    <span class="workflow-step__mark">3</span>
+                    <div><strong>Sent</strong><span>Network hand-off</span></div>
+                </li>
+                <li class="workflow-step" data-workflow-step="4">
+                    <span class="workflow-step__mark">4</span>
+                    <div><strong>Completed</strong><span>Confirmation received</span></div>
+                </li>
+            </ol>
+            <div class="workflow-failure" id="workflow-failure" hidden>
+                <strong>Processing stopped</strong>
+                <span>The backend marked this transaction as FAILED during validation or processing.</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel data-section" aria-labelledby="results-heading">
+        <div class="panel__heading">
+            <div>
+                <h2 id="results-heading">Transaction results</h2>
+                <p id="results-summary">Run a search to populate the ledger below.</p>
+            </div>
+        </div>
+        <div id="transaction-results">
+            <div class="empty-state">
+                <div>
+                    <span class="empty-state__mark">T</span>
+                    <h3>No search performed yet</h3>
+                    <p>Your matching transaction records will appear here.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">Atomic · Transaction ledger</footer>
+<script src="/js/common.js"></script>
+<script src="/js/transactions.js"></script>
+</body>
+</html>
