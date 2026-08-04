@@ -2,6 +2,7 @@ package com.example.Atomic.Service;
 
 import com.example.Atomic.Model.Transactions;
 import com.example.Atomic.Repository.TransactionsRepo;
+import com.example.Atomic.Repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
