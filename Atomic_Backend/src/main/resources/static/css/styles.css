@@ -23,6 +23,34 @@
     --radius-sm: 8px;
     --radius-md: 14px;
     --radius-lg: 22px;
+    --topbar-border: rgba(201, 214, 211, 0.88);
+    --topbar-bg: rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme="dark"] {
+    --ink-950: #e2ecea;
+    --ink-800: #c6d5d9;
+    --ink-600: #9eb2b8;
+    --ink-500: #879ba1;
+    --line: #2a3b40;
+    --line-strong: #375058;
+    --surface: #162228;
+    --surface-soft: #1d2c32;
+    --canvas: #0f171b;
+    --teal-700: #57cfbc;
+    --teal-600: #44baa8;
+    --teal-100: #173b35;
+    --teal-50: #163037;
+    --amber-700: #ebc06a;
+    --amber-100: #433312;
+    --red-700: #ef9090;
+    --red-100: #3e2020;
+    --blue-700: #79b9e4;
+    --blue-100: #173344;
+    --shadow-sm: 0 2px 7px rgba(0, 0, 0, 0.28);
+    --shadow-md: 0 18px 46px rgba(0, 0, 0, 0.42);
+    --topbar-border: rgba(55, 78, 84, 0.85);
+    --topbar-bg: rgba(16, 24, 28, 0.92);
 }
 
 * {
@@ -64,8 +92,8 @@ a {
     position: sticky;
     z-index: 20;
     top: 0;
-    border-bottom: 1px solid rgba(201, 214, 211, 0.88);
-    background: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid var(--topbar-border);
+    background: var(--topbar-bg);
     backdrop-filter: blur(14px);
 }
 
@@ -124,6 +152,27 @@ a {
 .nav-action:hover {
     color: var(--ink-950);
     background: var(--surface-soft);
+}
+
+.theme-toggle--floating {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 30;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink-950);
+    background: var(--surface);
+    box-shadow: 0 10px 24px rgba(18, 33, 38, 0.2);
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 760;
+}
+
+.theme-toggle--floating:hover {
+    color: var(--teal-700);
 }
 
 .nav a[aria-current="page"] {
