@@ -32,8 +32,9 @@ public class SuperController {
     @PostMapping("/transaction/submit")
     public String SubmitTransaction(@SessionAttribute(name = SuperController.LOGGED_IN_ACCOUNT, required = false)
                                         long debit_account_number, long credit_account_number, double amount) {
-        return trans.submitTransaction(debit_account_number, credit_account_number, amount);
-        }
+        trans.submitTransaction(debit_account_number, credit_account_number, amount);
+        return "Transaction processed successfully!";
+    }
 
     // fetch transaction details By Debit Account Number
     @GetMapping("/transaction/fetch/debit")
@@ -136,21 +137,6 @@ public class SuperController {
         newSession.setAttribute(LOGGED_IN_ACCOUNT, user.getAccountNumber());
         UserResponse response = UserResponse.from(user);
         return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/myProfile")
-    public ResponseEntity<UserResponse> getCurrentUser(
-            @SessionAttribute(name = LOGGED_IN_ACCOUNT, required = false) Long accountNumber) {
-        if (accountNumber == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        Optional<User> userOptional = user.findUser(accountNumber);
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(UserResponse.from(userOptional.get()));
     }
 
     // have to define "findUser" method...

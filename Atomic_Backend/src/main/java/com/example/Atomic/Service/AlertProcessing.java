@@ -49,22 +49,29 @@ public class AlertProcessing {
         List<Transactions> transStore6 = new ArrayList<>();
 
         rule1 = activeRules.stream().filter(obj -> "High Value Transaction Detection".equals(obj.getAlertName())).findFirst().orElse(null);
-        rule2 = activeRules.stream().filter(obj -> "Frequent Transaction Detection".equals(obj.getAlertName())).findFirst().orElse(null);
+        rule2 = activeRules.stream().filter(obj -> "Frequent Transaction Exceeds Limit".equals(obj.getAlertName())).findFirst().orElse(null);
         rule3 = activeRules.stream().filter(obj -> "Suspicious Transaction Detection".equals(obj.getAlertName())).findFirst().orElse(null);
         rule4 = activeRules.stream().filter(obj -> "Transaction Amount Exceeds Limit".equals(obj.getAlertName())).findFirst().orElse(null);
-        rule5 = activeRules.stream().filter(obj -> "Transaction to Blacklisted Account".equals(obj.getAlertName())).findFirst().orElse(null);
-        rule6 = activeRules.stream().filter(obj -> "Transaction from Blacklisted Account".equals(obj.getAlertName())).findFirst().orElse(null);
+        rule5 = activeRules.stream().filter(obj -> "New Payee detection".equals(obj.getAlertName())).findFirst().orElse(null);
+        rule6 = activeRules.stream().filter(obj -> "Multiple Failed Transactions ".equals(obj.getAlertName())).findFirst().orElse(null);
 
         if(rule1 != null)
         {
             boolean checkAlert = false;
             // logic to check if the alert should be generated or not
+            //high value transaction detection logic
+            for(Transactions transaction : transactions) {
+                if(transaction.getAmount() > rule1.getAlertThreshold()) {
+                    checkAlert = true;
+                    transStore1.add(transaction);
+                }
+            }
 
 
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule1.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, transStore1, rule1.getAlertID(), 1, Instant.now(), null);
+                Alert newAlert = new Alert(accountNumber, rule1.getAlertID(), 1, Instant.now(), null);
                 alert.save(newAlert);List.of(newAlert);
                 generatedAlerts.add(newAlert);
             }
@@ -73,12 +80,25 @@ public class AlertProcessing {
         {
             boolean checkAlert = false;
             // logic to check if the alert should be generated or not
-
+            //frequent transaction exceeds limit logic for last 5 minutes implementation
+            Instant fiveMinutesAgo = Instant.now().minusSeconds(300);
+            long count = transactions.stream()
+                    .filter(transaction -> transaction.getTimeDate() != null)
+                    .filter(transaction -> transaction.getTimeDate().isAfter(fiveMinutesAgo))
+                    .count();
+            if(count > rule2.getAlertThreshold()) {
+                checkAlert = true;
+                for (Transactions transaction : transactions) {
+                    if (transaction.getTimeDate() != null && transaction.getTimeDate().isAfter(fiveMinutesAgo)) {
+                        transStore2.add(transaction);
+                    }
+                }
+            }
 
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule2.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, transStore2, rule2.getAlertID(), 1, Instant.now(), null);
+                Alert newAlert = new Alert(accountNumber, rule2.getAlertID(), 1, Instant.now(), null);
                 alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
@@ -87,12 +107,28 @@ public class AlertProcessing {
         {
             boolean checkAlert = false;
             // logic to check if the alert should be generated or not
+            // suspicious transaction detection logic:
+            // check for unusually high number of night transactions (12 AM to 6 AM)
+            long suspiciousTransaction = 0;
+            for (Transactions transaction : transactions) {
+                if (transaction.getTimeDate() == null) {
+                    continue;
+                }
+                int hour = transaction.getTimeDate().atZone(java.time.ZoneId.systemDefault()).getHour();
+                if (hour >= 0 && hour <= 6) {
+                    suspiciousTransaction++;
+                    transStore3.add(transaction);
+                }
+            }
 
+            if(suspiciousTransaction > rule3.getAlertThreshold()) {
+                checkAlert = true;
+            }
 
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule3.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, transStore3, rule3.getAlertID(), 1, Instant.now(), null);
+                Alert newAlert = new Alert(accountNumber, rule3.getAlertID(), 1, Instant.now(), null);
                 alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
@@ -101,12 +137,32 @@ public class AlertProcessing {
         {
             boolean checkAlert = false;
             // logic to check if the alert should be generated or not
+            // daily limit logic:
+            // sum all today's transactions and compare with threshold
+            java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneId.systemDefault());
+            double totalTodayAmount = 0;
+            for (Transactions transaction : transactions) {
+                if (transaction.getTimeDate() == null) {
+                    continue;
+                }
+                java.time.LocalDate txDate = transaction.getTimeDate()
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDate();
+                if (today.equals(txDate)) {
+                    totalTodayAmount += transaction.getAmount();
+                    transStore4.add(transaction);
+                }
+            }
+
+            if (totalTodayAmount > rule4.getAlertThreshold()) {
+                checkAlert = true;
+            }
 
 
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule4.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, transStore4, rule4.getAlertID(), 1, Instant.now(), null);
+                Alert newAlert = new Alert(accountNumber, rule4.getAlertID(), 1, Instant.now(), null);
                 alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
@@ -115,11 +171,23 @@ public class AlertProcessing {
         {
             boolean checkAlert = false;
             // logic to check if the alert should be generated or not
+            // transaction to blacklisted account logic
+            long[] blacklistedAccounts = {9999999999L, 8888888888L, 7777777777L};
+            for (Transactions transaction : transactions) {
+                long creditAccount = transaction.getCreditAccountNumber();
+                for (long blockedAccount : blacklistedAccounts) {
+                    if (creditAccount == blockedAccount) {
+                        checkAlert = true;
+                        transStore5.add(transaction);
+                        break;
+                    }
+                }
+            }
 
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule5.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, transStore5, rule5.getAlertID(), 1, Instant.now(), null);
+                Alert newAlert = new Alert(accountNumber, rule5.getAlertID(), 1, Instant.now(), null);
                 alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
@@ -128,11 +196,23 @@ public class AlertProcessing {
         {
             boolean checkAlert = false;
             // logic to check if the alert should be generated or not
+            // transaction from blacklisted account logic
+            long[] blacklistedAccounts = {9999999999L, 8888888888L, 7777777777L};
+            for (Transactions transaction : transactions) {
+                long debitAccount = transaction.getDebitAccountNumber();
+                for (long blockedAccount : blacklistedAccounts) {
+                    if (debitAccount == blockedAccount) {
+                        checkAlert = true;
+                        transStore6.add(transaction);
+                        break;
+                    }
+                }
+            }
 
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule6.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, transStore6, rule6.getAlertID(), 1, Instant.now(), null);
+                Alert newAlert = new Alert(accountNumber, rule6.getAlertID(), 1, Instant.now(), null);
                 alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }

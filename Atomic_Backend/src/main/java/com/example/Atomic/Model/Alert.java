@@ -5,7 +5,6 @@ import jdk.jfr.DataAmount;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.List;
 
 @Component
 @Entity
@@ -15,16 +14,12 @@ public class Alert {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "alert_gen_id")
     private long alertGenID;
-    @Column(name="account_number")
-    private long accountNumber;
-    @Column(name = "transactions_store")
-    private List<Transactions> transactionsStore;
     @Column(name = "alert_id")
     private long alertID;
     //@Column(name = "severity")
     //private int severity;
     @Column(name = "status")
-    private int status; // 1 - Opened, 2 - Acknowledged, 3 - Resolved
+    private int status;
     @Column(name = "alert_time")
     private Instant alertTime;
     //private String alert_date;
@@ -33,24 +28,14 @@ public class Alert {
 
     public Alert() {}
 
-    public Alert(long accountNumber, List<Transactions> transactionsStore, long alertID, int status, Instant alert_time,
-                 Instant resolution_time) {
-        this.accountNumber = accountNumber;
-        this.transactionsStore = transactionsStore;
+    public Alert(long alertID, int status, Instant alert_time,
+          Instant resolution_time) {
         this.alertID = alertID;
         //this.severity = severity;
         this.status = status;
         //this.alert_date = alert_date;
         this.alertTime = alert_time;
         this.resolutionTime = resolution_time;
-    }
-
-    public long getAccountNumber() {
-        return accountNumber;
-    }
-
-    public void setAccountNumber(long accountNumber) {
-        this.accountNumber = accountNumber;
     }
 
     public long getAlert_id() {

@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface UserRepo extends JpaRepository<User, Long> {
     boolean existsByEmailIgnoreCase(String email);
     User findByEmailIgnoreCase(String email);
+    User findByAccountNumber(long debitAccountNumber);
 }
