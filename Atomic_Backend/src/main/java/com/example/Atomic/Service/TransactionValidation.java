@@ -12,7 +12,7 @@ public class TransactionValidation {
     @Autowired
     TransactionProcessing transProcessing;
     public String validateTransaction(Transactions transaction) {
-        // 0 < amount <= wallet balance, credit and debit account numbers should be 16 digits each,
+        // 0 < amount <= wallet balance, credit and debit account numbers should be 16 digits each
         // and they must not be equal
         if(transaction.getAmount() <= 0) {
             transaction.setStatus(5);
@@ -22,8 +22,8 @@ public class TransactionValidation {
 //        if(transaction.getAmount() > balance) {
 //            return "Transaction amount must be less than or equal to balance.";
 //        }
-        if(transaction.getCreditAccountNumber() <= 0 ||
-                transaction.getDebitAccountNumber() <= 0) {
+        if(String.valueOf(transaction.getCreditAccountNumber()).length() != 1 ||
+                String.valueOf(transaction.getDebitAccountNumber()).length() != 1) {
             transaction.setStatus(5);
             trans.save(transaction);
             return "Credit and debit account numbers must be 16 digits each.";
@@ -35,6 +35,7 @@ public class TransactionValidation {
         }
         transaction.setStatus(2);
         trans.save(transaction);
-        return transProcessing.processTransaction(transaction);
+        transProcessing.processTransaction(transaction);
+        return "Transaction is valid.";
     }
 }
