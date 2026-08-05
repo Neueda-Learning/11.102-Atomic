@@ -171,18 +171,8 @@ public class AlertProcessing {
         {
             boolean checkAlert = false;
             // logic to check if the alert should be generated or not
-            // transaction to blacklisted account logic
-            long[] blacklistedAccounts = {9999999999L, 8888888888L, 7777777777L};
-            for (Transactions transaction : transactions) {
-                long creditAccount = transaction.getCreditAccountNumber();
-                for (long blockedAccount : blacklistedAccounts) {
-                    if (creditAccount == blockedAccount) {
-                        checkAlert = true;
-                        transStore5.add(transaction);
-                        break;
-                    }
-                }
-            }
+            // new payee detection logic:
+
 
             // Generate alert
             if(checkAlert == true) {
@@ -195,19 +185,7 @@ public class AlertProcessing {
         if(rule6 != null)
         {
             boolean checkAlert = false;
-            // logic to check if the alert should be generated or not
-            // transaction from blacklisted account logic
-            long[] blacklistedAccounts = {9999999999L, 8888888888L, 7777777777L};
-            for (Transactions transaction : transactions) {
-                long debitAccount = transaction.getDebitAccountNumber();
-                for (long blockedAccount : blacklistedAccounts) {
-                    if (debitAccount == blockedAccount) {
-                        checkAlert = true;
-                        transStore6.add(transaction);
-                        break;
-                    }
-                }
-            }
+
 
             // Generate alert
             if(checkAlert == true) {
