@@ -83,6 +83,7 @@
 
                 const status = Number(transaction.status);
                 if (status === 4) {
+                    AtomicApi.applyCompletedDebitToUser(transaction);
                     stopped = true;
                     pollMessage.textContent = "Completion confirmed. Opening the receipt…";
                     await moveToResult("/success.html");

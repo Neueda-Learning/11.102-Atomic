@@ -30,10 +30,17 @@ public class SuperController {
 
     // post transaction
     @PostMapping("/transaction/submit")
-    public String SubmitTransaction(@SessionAttribute(name = SuperController.LOGGED_IN_ACCOUNT, required = false)
-                                        long debit_account_number, long credit_account_number, double amount) {
+    public ResponseEntity<String> SubmitTransaction(@SessionAttribute(name = SuperController.LOGGED_IN_ACCOUNT, required = false)
+                                                    Long debit_account_number,
+                                                    @RequestParam long credit_account_number,
+                                                    @RequestParam double amount) {
+        if (debit_account_number == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Login required. Please sign in again.");
+        }
+
         trans.submitTransaction(debit_account_number, credit_account_number, amount);
-        return "Transaction processed successfully!";
+        return ResponseEntity.ok("Transaction processed successfully!");
     }
 
     // fetch transaction details By Debit Account Number
