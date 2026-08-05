@@ -22,11 +22,10 @@ public class TransactionValidation {
 //        if(transaction.getAmount() > balance) {
 //            return "Transaction amount must be less than or equal to balance.";
 //        }
-        if(String.valueOf(transaction.getCreditAccountNumber()).length() != 1 ||
-                String.valueOf(transaction.getDebitAccountNumber()).length() != 1) {
+        if(transaction.getCreditAccountNumber() <= 0 || transaction.getDebitAccountNumber() <= 0) {
             transaction.setStatus(5);
             trans.save(transaction);
-            return "Credit and debit account numbers must be 16 digits each.";
+            return "Credit and debit account numbers must be positive.";
         }
         if(transaction.getCreditAccountNumber() == transaction.getDebitAccountNumber()) {
             transaction.setStatus(5);

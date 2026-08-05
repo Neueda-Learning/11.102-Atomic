@@ -13,19 +13,29 @@ public class TransactionProcessing {
     TransactionsRepo trans;
     @Autowired
     UserRepo user;
+
     public String processTransaction(Transactions transaction) {
 
-        //balance = balance - transaction.getAmount();
-        //transaction.setStatus(3);
-        //trans.save(transaction);
-
-        // logic for processing the transaction
-        // and updating the balances of the debit and credit accounts
+        // Resolve both accounts before touching any balance
         User debitUser = user.findByAccountNumber(transaction.getDebitAccountNumber());
-        debitUser.setBalance(debitUser.getBalance()-transaction.getAmount());
-        user.save(debitUser);
+        if (debitUser == null) {
+            transaction.setStatus(5);
+            trans.save(transaction);
+            return "Debit account " + transaction.getDebitAccountNumber() + " does not exist.";
+        }
+
         User creditUser = user.findByAccountNumber(transaction.getCreditAccountNumber());
-        creditUser.setBalance(creditUser.getBalance()+transaction.getAmount());
+        if (creditUser == null) {
+            transaction.setStatus(5);
+            trans.save(transaction);
+            return "Credit account " + transaction.getCreditAccountNumber() + " does not exist.";
+        }
+
+        // Deduct from debit, add to credit
+        debitUser.setBalance(debitUser.getBalance() - transaction.getAmount());
+        user.save(debitUser);
+
+        creditUser.setBalance(creditUser.getBalance() + transaction.getAmount());
         user.save(creditUser);
 
         transaction.setStatus(4);
