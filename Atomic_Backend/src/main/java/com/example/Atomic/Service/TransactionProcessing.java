@@ -14,9 +14,8 @@ public class TransactionProcessing {
 
     @Autowired
 
-    public TransactionProcessing(TransactionsRepo trans, AccountBalanceTransferService accountBalanceTransferService) {
+    public TransactionProcessing(TransactionsRepo trans) {
         this.trans = trans;
-        this.accountBalanceTransferService = accountBalanceTransferService;
     }
     public String processTransaction(Transactions transaction) {
         try {
