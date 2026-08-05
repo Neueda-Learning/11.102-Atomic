@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sign in to Atomic payments">
+    <title>Login | Atomic</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar__inner">
+        <a class="brand" href="/" aria-label="Atomic home">
+            <span class="brand__mark">A</span>
+            <span class="brand__text">ATOMIC</span>
+        </a>
+        <nav class="nav" aria-label="Public navigation">
+            <a href="/">Home</a>
+            <a href="/login.html" aria-current="page">Login</a>
+            <a href="/signup.html">Sign up</a>
+        </nav>
+    </div>
+</header>
+<main class="auth-shell">
+    <section class="auth-card" aria-labelledby="login-heading">
+        <div class="auth-card__intro">
+            <a class="brand" href="/" aria-label="Atomic home">
+                <span class="brand__mark">A</span>
+                <span>ATOMIC</span>
+            </a>
+            <div>
+                <p class="eyebrow">Secure workspace</p>
+                <h1>Your wallet, without the clutter.</h1>
+                <p>Sign in to view your account and create a monitored transfer.</p>
+            </div>
+            <small>Atomic · Payment workflow demonstrator</small>
+        </div>
+
+        <div class="auth-card__form">
+            <p class="eyebrow">Welcome back</p>
+            <h2 id="login-heading">Sign in</h2>
+            <p class="subcopy">Use the email and password registered with your Atomic account.</p>
+
+            <form class="form" id="login-form">
+                <div class="field">
+                    <label for="email">Email address</label>
+                    <input id="email" name="email" type="email" autocomplete="username"
+                           placeholder="you@example.com" required autofocus>
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password"
+                           autocomplete="current-password" placeholder="Enter your password" required>
+                </div>
+                <button class="button button--primary" id="login-button" type="submit">Sign in</button>
+                <p class="form-message" id="login-message" aria-live="polite"></p>
+            </form>
+
+            <p class="auth-switch">New to Atomic? <a href="/signup.html">Create an account</a></p>
+        </div>
+    </section>
+</main>
+<script src="/js/api.js"></script>
+<script src="/js/login.js"></script>
+</body>
+</html>
