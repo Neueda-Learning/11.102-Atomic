@@ -14,6 +14,8 @@ public class Alert {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "alert_gen_id")
     private long alertGenID;
+    @Column(name = "account_number")
+    private long accountNumber;
     @Column(name = "alert_id")
     private long alertID;
     //@Column(name = "severity")
@@ -28,8 +30,9 @@ public class Alert {
 
     public Alert() {}
 
-    public Alert(long alertID, int status, Instant alert_time,
+    public Alert(long accountNumber,long alertID, int status, Instant alert_time,
           Instant resolution_time) {
+        this.accountNumber  = accountNumber;
         this.alertID = alertID;
         //this.severity = severity;
         this.status = status;

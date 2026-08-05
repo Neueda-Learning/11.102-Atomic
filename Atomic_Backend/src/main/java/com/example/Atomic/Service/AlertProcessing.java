@@ -27,6 +27,42 @@ public class AlertProcessing {
         return "Alert message";
     }
 
+     // generateAlert method but only for rule 6
+    public List<Alert> generateAlert6(long accountNumber, int totalSeverity) {
+        List<Transactions> transactions = trans.findAllByDebitAccountNumberEquals(accountNumber);
+        List<Rules> activeRules = rules.findAllByAlertStatusEquals(1);
+        List<Alert> generatedAlerts = new ArrayList<>();
+
+        Rules rule6 = activeRules.stream().
+                filter(obj -> "Multiple Failed Transactions ".equals(obj.getAlertName())).
+                findFirst().orElse(null);
+
+        if (rule6 != null) {
+            boolean checkAlert = false;
+            // logic to check if the alert should be generated or not
+            // transaction from blacklisted account logic
+            long[] blacklistedAccounts = {9999999999L, 8888888888L, 7777777777L};
+            for (Transactions transaction : transactions) {
+                long debitAccount = transaction.getDebitAccountNumber();
+                for (long blockedAccount : blacklistedAccounts) {
+                    if (debitAccount == blockedAccount) {
+                        checkAlert = true;
+                        break;
+                    }
+                }
+            }
+            // Generate alert
+            if(checkAlert == true) {
+                totalSeverity += rule6.getAlertSeverity();
+                Alert newAlert = new Alert(accountNumber, rule6.getAlertID(), 1, Instant.now(), null);
+                alert.save(newAlert);
+                generatedAlerts.add(newAlert);
+            }
+        }
+        return generatedAlerts;
+    }
+
+
     public List<Alert> generateAlert(long accountNumber, int totalSeverity) {
         // On submission of any transaction this method will be called
         // to check the rules and generate an alert if any rule is violated.
