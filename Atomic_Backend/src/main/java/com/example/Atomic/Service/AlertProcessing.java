@@ -27,6 +27,32 @@ public class AlertProcessing {
         return "Alert message";
     }
 
+    // generateAlert but only for rule 6
+    public List<Alert> generateAlertForRule6(long accountNumber, int totalSeverity) {
+        List<Transactions> transactions = trans.findAllByDebitAccountNumberEquals(accountNumber);
+        List<Rules> activeRules = rules.findAllByAlertStatusEquals(1);
+        List<Alert> generatedAlerts = new ArrayList<>();
+
+        Rules rule6 = activeRules.stream().
+                filter(obj -> "Transaction from Blacklisted Account".equals(obj.getAlertName())).
+                findFirst().orElse(null);
+
+        if(rule6 != null)
+        {
+            boolean checkAlert = false;
+            // logic to check if the alert should be generated or not
+
+            // Generate alert
+            if(checkAlert == true) {
+                totalSeverity += rule6.getAlertSeverity();
+                Alert newAlert = new Alert(accountNumber, rule6.getAlertID(), 1, Instant.now(), null);
+                alert.save(newAlert);
+                generatedAlerts.add(newAlert);
+            }
+        }
+        return generatedAlerts;
+    }
+
     public List<Alert> generateAlert(long accountNumber, int totalSeverity) {
         // On submission of any transaction this method will be called
         // to check the rules and generate an alert if any rule is violated.
@@ -39,21 +65,21 @@ public class AlertProcessing {
         Rules rule3;
         Rules rule4;
         Rules rule5;
-        Rules rule6;
+        //Rules rule6;
 
         List<Transactions> transStore1 = new ArrayList<>();
         List<Transactions> transStore2 = new ArrayList<>();
         List<Transactions> transStore3 = new ArrayList<>();
         List<Transactions> transStore4 = new ArrayList<>();
         List<Transactions> transStore5 = new ArrayList<>();
-        List<Transactions> transStore6 = new ArrayList<>();
+        //List<Transactions> transStore6 = new ArrayList<>();
 
         rule1 = activeRules.stream().filter(obj -> "High Value Transaction Detection".equals(obj.getAlertName())).findFirst().orElse(null);
         rule2 = activeRules.stream().filter(obj -> "Frequent Transaction Detection".equals(obj.getAlertName())).findFirst().orElse(null);
         rule3 = activeRules.stream().filter(obj -> "Suspicious Transaction Detection".equals(obj.getAlertName())).findFirst().orElse(null);
         rule4 = activeRules.stream().filter(obj -> "Transaction Amount Exceeds Limit".equals(obj.getAlertName())).findFirst().orElse(null);
         rule5 = activeRules.stream().filter(obj -> "Transaction to Blacklisted Account".equals(obj.getAlertName())).findFirst().orElse(null);
-        rule6 = activeRules.stream().filter(obj -> "Transaction from Blacklisted Account".equals(obj.getAlertName())).findFirst().orElse(null);
+        //rule6 = activeRules.stream().filter(obj -> "Transaction from Blacklisted Account".equals(obj.getAlertName())).findFirst().orElse(null);
 
         if(rule1 != null)
         {
@@ -124,19 +150,19 @@ public class AlertProcessing {
                 generatedAlerts.add(newAlert);
             }
         }
-        if(rule6 != null)
-        {
-            boolean checkAlert = false;
-            // logic to check if the alert should be generated or not
-
-            // Generate alert
-            if(checkAlert == true) {
-                totalSeverity += rule6.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, rule6.getAlertID(), 1, Instant.now(), null);
-                alert.save(newAlert);
-                generatedAlerts.add(newAlert);
-            }
-        }
+//        if(rule6 != null)
+//        {
+//            boolean checkAlert = false;
+//            // logic to check if the alert should be generated or not
+//
+//            // Generate alert
+//            if(checkAlert == true) {
+//                totalSeverity += rule6.getAlertSeverity();
+//                Alert newAlert = new Alert(accountNumber, rule6.getAlertID(), 1, Instant.now(), null);
+//                alert.save(newAlert);
+//                generatedAlerts.add(newAlert);
+//            }
+//        }
         return generatedAlerts;
     }
 }
