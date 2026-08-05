@@ -4,6 +4,7 @@
     const USER_KEY = "atomic.v2.user";
     const REQUEST_KEY = "atomic.v2.pending-request";
     const TRANSACTION_KEY = "atomic.v2.transaction";
+    const BALANCE_APPLIED_KEY = "atomic.v2.balance-applied";
     const THEME_KEY = "atomic.v2.theme";
 
     function getStoredTheme() {
@@ -196,6 +197,7 @@
             await request("/home/logout", { method: "POST" });
         } finally {
             sessionStorage.removeItem(USER_KEY);
+            sessionStorage.removeItem(BALANCE_APPLIED_KEY);
             clearTransactionState();
             location.replace("/");
         }
@@ -282,6 +284,57 @@
         return transaction?.transID ?? transaction?.transId ?? transaction?.transactionId;
     }
 
+    function getAppliedBalanceTransactionIds() {
+        const raw = sessionStorage.getItem(BALANCE_APPLIED_KEY);
+        if (!raw) {
+            return [];
+        }
+
+        try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed.map(String) : [];
+        } catch (error) {
+            sessionStorage.removeItem(BALANCE_APPLIED_KEY);
+            return [];
+        }
+    }
+
+    function setAppliedBalanceTransactionIds(ids) {
+        sessionStorage.setItem(BALANCE_APPLIED_KEY, JSON.stringify(ids.slice(-100)));
+    }
+
+    function applyCompletedDebitToUser(transaction) {
+        const user = getUser();
+        if (!user || Number(transaction?.status) !== 4) {
+            return user;
+        }
+
+        if (String(transaction.debitAccountNumber) !== String(user.accountNumber)) {
+            return user;
+        }
+
+        const id = transactionId(transaction);
+        if (id == null) {
+            return user;
+        }
+
+        const appliedIds = getAppliedBalanceTransactionIds();
+        const idText = String(id);
+        if (appliedIds.includes(idText)) {
+            return user;
+        }
+
+        const amount = Number(transaction.amount);
+        const safeAmount = Number.isFinite(amount) ? amount : 0;
+        const nextUser = setUser({
+            ...user,
+            balance: Math.max(0, Number(user.balance) - safeAmount)
+        });
+        appliedIds.push(idText);
+        setAppliedBalanceTransactionIds(appliedIds);
+        return nextUser;
+    }
+
     function findSubmittedTransaction(transactions, pendingRequest, knownId) {
         if (!Array.isArray(transactions)) {
             return null;
@@ -311,6 +364,7 @@
     }
 
     window.AtomicApi = {
+        applyCompletedDebitToUser,
         applyTheme,
         bindLogout,
         clearTransactionState,
