@@ -1,7 +1,7 @@
 (function () {
     "use strict";
 
-    const user = AtomicApi.requireUser();
+    let user = AtomicApi.requireUser();
     const pendingRequest = AtomicApi.getPendingRequest();
     let transaction = AtomicApi.getTransaction();
     const resultType = document.body.dataset.result;
@@ -90,10 +90,8 @@
 
         const balanceElement = document.querySelector("#result-balance");
         if (balanceElement) {
-            balanceElement.textContent = AtomicApi.formatMoney(
-                Math.max(0, user.balance - Number(transaction.amount))
-            );
-            balanceElement.title = "Projection based on the balance returned at login";
+            balanceElement.textContent = AtomicApi.formatMoney(user.balance);
+            balanceElement.title = "Current session balance after completed transfers";
         }
     }
 
@@ -125,10 +123,17 @@
                 return;
             }
 
+            if (status === 4) {
+                user = AtomicApi.applyCompletedDebitToUser(transaction) ?? user;
+            }
+
             render();
         } catch (error) {
             // The stored transaction was itself previously fetched from the backend.
             // Keep the receipt visible when a subsequent verification request fails.
+            if (Number(transaction.status) === 4) {
+                user = AtomicApi.applyCompletedDebitToUser(transaction) ?? user;
+            }
             render();
         }
     }
