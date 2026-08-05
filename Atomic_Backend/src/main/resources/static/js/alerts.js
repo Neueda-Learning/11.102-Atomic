@@ -20,7 +20,10 @@
     const summary = document.querySelector("#alert-summary");
     const filter = document.querySelector("#alert-filter");
     const alertSelect = document.querySelector("#alert-id");
+    const alertChartCanvas = document.querySelector("#alert-status-chart");
+    const alertChartEmpty = document.querySelector("#alert-chart-empty");
     let fetched = false;
+    let alertChart = null;
 
     function alertStatusBadge(status) {
         const [label, style] = statusConfig[status] ?? ["Unknown", "info"];
@@ -33,16 +36,76 @@
         `).join("");
     }
 
-    function renderAlerts() {
-        if (!fetched) {
+    function getFilteredAlerts() {
+        const selectedStatus = filter.value;
+        return selectedStatus === "all"
+            ? mockAlerts
+            : mockAlerts.filter((alert) => String(alert.status) === selectedStatus);
+    }
+
+    function renderAlertChart(alerts) {
+        if (!alertChartCanvas || !alertChartEmpty) {
             return;
         }
 
-        const selectedStatus = filter.value;
-        const alerts = selectedStatus === "all"
-            ? mockAlerts
-            : mockAlerts.filter((alert) => String(alert.status) === selectedStatus);
+        if (typeof window.Chart !== "function") {
+            alertChartCanvas.hidden = true;
+            alertChartEmpty.hidden = false;
+            alertChartEmpty.textContent = "Chart library is unavailable.";
+            return;
+        }
 
+        const counts = [0, 0, 0];
+        alerts.forEach((alert) => {
+            if (alert.status >= 0 && alert.status <= 2) {
+                counts[alert.status] += 1;
+            }
+        });
+
+        const total = counts.reduce((sum, count) => sum + count, 0);
+        if (total === 0) {
+            if (alertChart) {
+                alertChart.destroy();
+                alertChart = null;
+            }
+            alertChartCanvas.hidden = true;
+            alertChartEmpty.hidden = false;
+            alertChartEmpty.textContent = "No chart data available yet.";
+            return;
+        }
+
+        alertChartCanvas.hidden = false;
+        alertChartEmpty.hidden = true;
+
+        if (!alertChart) {
+            alertChart = new window.Chart(alertChartCanvas, {
+                type: "pie",
+                data: {
+                    labels: ["Open", "Acknowledged", "Resolved"],
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: ["#a53b3b", "#9a5f08", "#0b655b"],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "bottom"
+                        }
+                    }
+                }
+            });
+            return;
+        }
+
+        alertChart.data.datasets[0].data = counts;
+        alertChart.update();
+    }
+
+    function renderAlertsTable(alerts) {
         summary.innerHTML = `<strong>${alerts.length}</strong> of ${mockAlerts.length} alerts shown`;
 
         if (!alerts.length) {
@@ -88,17 +151,26 @@
         `;
     }
 
+    function syncAlertsView() {
+        if (!fetched) {
+            return;
+        }
+        const alerts = getFilteredAlerts();
+        renderAlertsTable(alerts);
+        renderAlertChart(alerts);
+    }
+
     document.querySelector("#fetch-alerts").addEventListener("click", (event) => {
         AtomicUI.setButtonLoading(event.currentTarget, true, "Fetching…");
         window.setTimeout(() => {
             fetched = true;
-            renderAlerts();
+            syncAlertsView();
             AtomicUI.setButtonLoading(event.currentTarget, false);
             AtomicUI.showToast("Alerts fetched", `${mockAlerts.length} mock alerts loaded.`);
         }, 350);
     });
 
-    filter.addEventListener("change", renderAlerts);
+    filter.addEventListener("change", syncAlertsView);
 
     document.querySelector("#alert-update-form").addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -116,7 +188,7 @@
                 alert.resolutionTime = Date.now() - new Date(alert.alertTime).getTime();
             }
             fetched = true;
-            renderAlerts();
+            syncAlertsView();
             AtomicUI.showToast("Alert updated", `Alert #${alertId} is now ${statusConfig[newStatus][0].toLowerCase()}.`);
         } catch (error) {
             AtomicUI.showToast("Update failed", error.message, "error");
