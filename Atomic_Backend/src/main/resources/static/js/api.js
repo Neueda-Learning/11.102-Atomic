@@ -4,6 +4,85 @@
     const USER_KEY = "atomic.v2.user";
     const REQUEST_KEY = "atomic.v2.pending-request";
     const TRANSACTION_KEY = "atomic.v2.transaction";
+    const THEME_KEY = "atomic.v2.theme";
+
+    function getStoredTheme() {
+        try {
+            const stored = localStorage.getItem(THEME_KEY);
+            return stored === "dark" || stored === "light" ? stored : null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function resolveTheme() {
+        const stored = getStoredTheme();
+        if (stored) {
+            return stored;
+        }
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+
+    function updateThemeToggleLabels(theme) {
+        const isDark = theme === "dark";
+        document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
+            button.setAttribute("aria-pressed", String(isDark));
+            button.textContent = isDark ? "Theme: Dark" : "Theme: Light";
+            button.setAttribute("aria-label", isDark
+                ? "Switch to light theme"
+                : "Switch to dark theme");
+        });
+    }
+
+    function applyTheme(theme, persist = true) {
+        const safeTheme = theme === "dark" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", safeTheme);
+        if (persist) {
+            try {
+                localStorage.setItem(THEME_KEY, safeTheme);
+            } catch (error) {
+                // Ignore storage limits and privacy mode restrictions.
+            }
+        }
+        updateThemeToggleLabels(safeTheme);
+    }
+
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute("data-theme") || "light";
+        applyTheme(current === "dark" ? "light" : "dark");
+    }
+
+    function mountThemeToggle() {
+        if (document.querySelector("[data-theme-toggle]")) {
+            return;
+        }
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.themeToggle = "true";
+        button.className = "theme-toggle";
+        button.addEventListener("click", toggleTheme);
+
+        const nav = document.querySelector(".nav");
+        if (nav) {
+            if (nav.querySelector(".nav-action")) {
+                button.classList.add("nav-action");
+            } else if (nav.querySelector(".link-button")) {
+                button.classList.add("link-button");
+            }
+            nav.appendChild(button);
+            return;
+        }
+
+        button.classList.add("theme-toggle--floating");
+        document.body.appendChild(button);
+    }
+
+    function initTheme() {
+        applyTheme(resolveTheme(), false);
+        mountThemeToggle();
+        updateThemeToggleLabels(document.documentElement.getAttribute("data-theme") || "light");
+    }
 
     function parseApiText(text) {
         const trimmed = text.trim();
@@ -130,8 +209,18 @@
 
     function populateUser(user) {
         const fullName = `${user.firstName} ${user.lastName}`.trim() || "Atomic user";
+        const firstName = user.firstName || fullName.split(" ")[0] || "User";
+        const initials = `${String(user.firstName || "").slice(0, 1)}${String(user.lastName || "").slice(0, 1)}`
+            .replace(/[^a-z0-9]/gi, "")
+            .toUpperCase() || "AU";
         document.querySelectorAll("[data-user-name]").forEach((element) => {
             element.textContent = fullName;
+        });
+        document.querySelectorAll("[data-user-first-name]").forEach((element) => {
+            element.textContent = firstName;
+        });
+        document.querySelectorAll("[data-user-initials]").forEach((element) => {
+            element.textContent = initials;
         });
         document.querySelectorAll("[data-account-number]").forEach((element) => {
             element.textContent = user.accountNumber;
@@ -222,6 +311,7 @@
     }
 
     window.AtomicApi = {
+        applyTheme,
         bindLogout,
         clearTransactionState,
         fetchTransactionsForDebit,
@@ -237,9 +327,13 @@
         requireUser,
         setButtonLoading,
         setPendingRequest,
+        initTheme,
         setTransaction,
         setUser,
         statusInfo,
+        toggleTheme,
         transactionId
     };
+
+    initTheme();
 })();
