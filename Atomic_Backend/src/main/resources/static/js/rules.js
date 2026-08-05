@@ -9,7 +9,10 @@
     const statusSelect = document.querySelector("#rule-status");
     const severitySelect = document.querySelector("#rule-severity");
     const updateButton = document.querySelector("#update-rule");
+    const ruleChartCanvas = document.querySelector("#rule-severity-chart");
+    const ruleChartEmpty = document.querySelector("#rule-chart-empty");
     let rules = [];
+    let ruleChart = null;
 
     function normaliseRule(rule) {
         return {
@@ -60,12 +63,85 @@
         severitySelect.value = String(rule.severity);
     }
 
-    function renderRules() {
+    function getFilteredRules() {
         const selectedStatus = filter.value;
-        const visibleRules = selectedStatus === "all"
+        return selectedStatus === "all"
             ? rules
             : rules.filter((rule) => String(rule.status) === selectedStatus);
+    }
 
+    function renderRuleChart(visibleRules) {
+        if (!ruleChartCanvas || !ruleChartEmpty) {
+            return;
+        }
+
+        if (typeof window.Chart !== "function") {
+            ruleChartCanvas.hidden = true;
+            ruleChartEmpty.hidden = false;
+            ruleChartEmpty.textContent = "Chart library is unavailable.";
+            return;
+        }
+
+        const counts = [0, 0, 0, 0];
+        visibleRules.forEach((rule) => {
+            if (rule.severity >= 1 && rule.severity <= 4) {
+                counts[rule.severity - 1] += 1;
+            }
+        });
+
+        const total = counts.reduce((sum, count) => sum + count, 0);
+        if (total === 0) {
+            if (ruleChart) {
+                ruleChart.destroy();
+                ruleChart = null;
+            }
+            ruleChartCanvas.hidden = true;
+            ruleChartEmpty.hidden = false;
+            ruleChartEmpty.textContent = "No chart data available yet.";
+            return;
+        }
+
+        ruleChartCanvas.hidden = false;
+        ruleChartEmpty.hidden = true;
+
+        if (!ruleChart) {
+            ruleChart = new window.Chart(ruleChartCanvas, {
+                type: "bar",
+                data: {
+                    labels: ["1 - Low", "2 - Medium", "3 - High", "4 - Critical"],
+                    datasets: [{
+                        label: "Rules",
+                        data: counts,
+                        backgroundColor: ["#0b655b", "#245d86", "#9a5f08", "#a53b3b"],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            return;
+        }
+
+        ruleChart.data.datasets[0].data = counts;
+        ruleChart.update();
+    }
+
+    function renderRulesTable(visibleRules) {
         summary.innerHTML = `<strong>${visibleRules.length}</strong> of ${rules.length} rules shown`;
 
         if (!visibleRules.length) {
@@ -107,6 +183,12 @@
         `;
     }
 
+    function syncRulesView() {
+        const visibleRules = getFilteredRules();
+        renderRulesTable(visibleRules);
+        renderRuleChart(visibleRules);
+    }
+
     async function fetchRules(showNotification = true) {
         const button = document.querySelector("#fetch-rules");
         const selectedRuleId = Number(ruleSelect.value);
@@ -117,7 +199,7 @@
             const payload = await AtomicUI.request("/home/rules");
             rules = (Array.isArray(payload) ? payload : []).map(normaliseRule);
             populateRuleSelect(selectedRuleId);
-            renderRules();
+            syncRulesView();
             if (showNotification) {
                 AtomicUI.showToast("Rules fetched", `${rules.length} persisted rules loaded.`);
             }
@@ -133,6 +215,7 @@
                     </div>
                 </div>
             `;
+            renderRuleChart([]);
             if (showNotification) {
                 AtomicUI.showToast("Fetch failed", error.message, "error");
             }
@@ -142,7 +225,7 @@
     }
 
     document.querySelector("#fetch-rules").addEventListener("click", () => fetchRules(true));
-    filter.addEventListener("change", renderRules);
+    filter.addEventListener("change", syncRulesView);
     ruleSelect.addEventListener("change", syncFormToRule);
 
     document.querySelector("#rule-update-form").addEventListener("submit", async (event) => {

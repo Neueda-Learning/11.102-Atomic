@@ -10,23 +10,32 @@
 <body data-result="success">
 <main class="result-shell">
     <section class="result-card" aria-labelledby="result-heading">
-        <span class="result-mark" aria-hidden="true">✓</span>
-        <p class="eyebrow">Backend confirmed</p>
-        <h1 id="result-heading">Transfer completed.</h1>
-        <p>The transaction status was fetched from the backend and returned as COMPLETED.</p>
+        <div class="result-card__hero">
+            <span class="result-mark" aria-hidden="true">✓</span>
+            <p class="eyebrow">Backend confirmed</p>
+            <h1 id="result-heading">Transfer completed.</h1>
+            <p class="result-copy">Funds moved successfully and your receipt details are ready below.</p>
+        </div>
 
         <dl class="detail-list result-details">
             <div><dt>Transaction reference</dt><dd id="result-id">—</dd></div>
             <div><dt>Amount</dt><dd id="result-amount">—</dd></div>
             <div><dt>From</dt><dd id="result-debit">—</dd></div>
             <div><dt>To</dt><dd id="result-credit">—</dd></div>
-            <div><dt>Backend status</dt><dd id="result-status">Completed</dd></div>
+            <div><dt>Backend status</dt><dd id="result-status" class="badge badge--completed">Completed</dd></div>
             <div><dt>Projected debit balance</dt><dd id="result-balance">—</dd></div>
         </dl>
 
+        <div class="result-tools" aria-label="Receipt tools">
+            <button id="copy-reference" class="button button--ghost" type="button">Copy reference</button>
+            <button id="print-receipt" class="button button--ghost" type="button">Print receipt</button>
+            <span id="result-feedback" class="result-feedback" aria-live="polite"></span>
+        </div>
+
         <div class="result-actions">
             <a class="button button--primary" href="/transaction.html">Make another transfer</a>
-            <a class="button button--secondary" href="/dashboard.html">Return to dashboard</a>
+            <a class="button button--secondary" href="/dashboard.html">Dashboard</a>
+            <a class="button button--secondary" href="/transactions.html">Return back</a>
         </div>
     </section>
 </main>

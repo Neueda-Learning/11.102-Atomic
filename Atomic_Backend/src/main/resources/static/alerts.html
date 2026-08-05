@@ -43,10 +43,10 @@
         <span class="demo-pill">Mock fetch data</span>
     </header>
 
-    <div class="mock-banner">
-        <strong>Demo mode:</strong>
-        <span>Alert fetches use browser-side mock records. Status updates call the existing backend acknowledgement endpoint and update this page locally.</span>
-    </div>
+<!--    <div class="mock-banner">-->
+<!--        <strong>Demo mode:</strong>-->
+<!--        <span>Alert fetches use browser-side mock records. Status updates call the existing backend acknowledgement endpoint and update this page locally.</span>-->
+<!--    </div>-->
 
     <div class="two-column">
         <section class="panel" aria-labelledby="update-alert-heading">
@@ -87,6 +87,16 @@
                 </div>
                 <button class="btn btn--secondary" id="fetch-alerts" type="button">Fetch alerts</button>
             </div>
+            <section class="chart-block" aria-labelledby="alert-chart-heading">
+                <div class="chart-block__head">
+                    <h3 id="alert-chart-heading">Alert status distribution</h3>
+                    <p>Current share of open, acknowledged, and resolved alerts.</p>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="alert-status-chart" role="img" aria-label="Pie chart showing alert statuses"></canvas>
+                    <p class="chart-empty" id="alert-chart-empty" hidden>No chart data available yet.</p>
+                </div>
+            </section>
             <div class="table-toolbar">
                 <span class="table-toolbar__summary" id="alert-summary">No alerts fetched.</span>
                 <div class="inline-controls">
@@ -115,6 +125,7 @@
 <footer class="footer">Atomic · Alert review</footer>
 <script src="/js/common.js"></script>
 <script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/js/alerts.js"></script>
 <script>AtomicApi.bindLogout();</script>
 </body>
