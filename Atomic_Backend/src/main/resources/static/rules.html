@@ -101,6 +101,16 @@
                 </div>
                 <button class="btn btn--secondary" id="fetch-rules" type="button">Fetch rules</button>
             </div>
+            <section class="chart-block" aria-labelledby="rule-chart-heading">
+                <div class="chart-block__head">
+                    <h3 id="rule-chart-heading">Rules by severity</h3>
+                    <p>Count of rules in each severity level for the current filter.</p>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="rule-severity-chart" role="img" aria-label="Bar chart showing rule counts by severity"></canvas>
+                    <p class="chart-empty" id="rule-chart-empty" hidden>No chart data available yet.</p>
+                </div>
+            </section>
             <div class="table-toolbar">
                 <span class="table-toolbar__summary" id="rule-summary">No rules fetched.</span>
                 <div class="inline-controls">
@@ -128,6 +138,7 @@
 <footer class="footer">Atomic · Rule configuration</footer>
 <script src="/js/common.js"></script>
 <script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/js/rules.js"></script>
 <script>AtomicApi.bindLogout();</script>
 </body>
