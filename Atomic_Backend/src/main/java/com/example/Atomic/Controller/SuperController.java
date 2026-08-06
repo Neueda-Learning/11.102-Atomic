@@ -39,7 +39,7 @@ public class SuperController {
     public ResponseEntity<String> SubmitTransaction(@SessionAttribute(name = SuperController.LOGGED_IN_ACCOUNT, required = false)
                                                     Long debit_account_number,
                                                     @RequestParam long credit_account_number,
-                                                    @RequestParam double amount) {
+                                                    @RequestParam double amount) throws InterruptedException {
         if (debit_account_number == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Login required. Please sign in again.");

@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS rules (
 
 CREATE TABLE IF NOT EXISTS alert (
     alert_gen_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    account_number BIGINT NOT NULL,
     alert_id BIGINT NOT NULL,
     status INT NOT NULL,
     alert_time TIMESTAMP NOT NULL,
