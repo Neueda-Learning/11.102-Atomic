@@ -89,13 +89,13 @@
         if (digitsOnly === String(user.accountNumber)) {
             setFieldFeedback(
                 creditFeedback,
-                "Debit and credit accounts cannot be the same.",
+                "Choose a destination account other than your own.",
                 true
             );
             return false;
         }
 
-        setFieldFeedback(creditFeedback, "Destination account is ready.", false);
+        setFieldFeedback(creditFeedback, "This account is ready to receive your transfer.", false);
         return true;
     }
 
@@ -118,7 +118,7 @@
             return false;
         }
 
-        setFieldFeedback(amountFeedback, "Amount can be added to the queue.", false);
+        setFieldFeedback(amountFeedback, "This amount is ready to add.", false);
         return true;
     }
 
@@ -129,7 +129,7 @@
             if (showFeedback) {
                 setFieldFeedback(
                     repeatFeedback,
-                    "Enter a whole number of one or more repetitions.",
+                    "Enter how many times you’d like to repeat this transfer (1 or more).",
                     true
                 );
             }
@@ -170,13 +170,13 @@
                 || selectedTime.getTime() < Date.now() + 60_000) {
             setFieldFeedback(
                 processingTimeFeedback,
-                "Scheduled processing must be at least one minute from now.",
+                "Choose a time at least one minute from now.",
                 true
             );
             return false;
         }
 
-        setFieldFeedback(processingTimeFeedback, "Scheduled minute is valid.", false);
+        setFieldFeedback(processingTimeFeedback, "Your transfer is ready to be scheduled.", false);
         return true;
     }
 
@@ -230,7 +230,7 @@
             return '<span class="badge badge--created">Submitted</span>';
         }
         if (item.submissionState === "failed") {
-            return '<span class="badge badge--failed">Request failed</span>';
+            return '<span class="badge badge--failed">Couldn’t submit</span>';
         }
         return "";
     }
@@ -257,7 +257,7 @@
             container.innerHTML = `
                 <div class="history-empty">
                     <strong>Your queue is empty</strong>
-                    <span>You may add as many destinations and timestamps as required.</span>
+                    <span>You can add as many destinations and times as you need.</span>
                 </div>
             `;
             refreshPreview();
@@ -413,7 +413,7 @@
                 item.submissionState = "failed";
             }
 
-            item.submissionError = error.message || "The request could not be submitted.";
+            item.submissionError = error.message || "We couldn’t submit this transfer. Please try again.";
         }
     }
 
@@ -423,7 +423,7 @@
 
         if (!syncFormState(true)) {
             formMessage.classList.add("form-message--error");
-            formMessage.textContent = "Correct the highlighted fields before adding this transfer.";
+            formMessage.textContent = "Please check the highlighted fields before adding this transfer.";
             return;
         }
 
@@ -431,7 +431,7 @@
         for (let repeatNumber = 1; repeatNumber <= repeatCount; repeatNumber += 1) {
             queue.push(createQueueItem(repeatNumber, repeatCount));
         }
-        formMessage.textContent = `${repeatCount} transfer${repeatCount === 1 ? "" : "s"} added. Enter another destination or submit the queue.`;
+        formMessage.textContent = `${repeatCount} transfer${repeatCount === 1 ? "" : "s"} added. Add another destination or submit your queue.`;
         renderQueue();
         resetEntryFields();
     });
@@ -496,7 +496,7 @@
             renderQueue();
         }
 
-        queueMessage.textContent = "All requests were sent. Opening live processing…";
+        queueMessage.textContent = "Your transfers have been submitted. We’re opening the progress page…";
         AtomicApi.setPendingBatch(queue);
         location.assign("/processing.html");
     });

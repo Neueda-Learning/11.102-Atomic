@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Submit and fetch Atomic transactions">
+    <meta name="description" content="Send and search Atomic transactions">
     <script>
         location.replace("/transaction.html");
     </script>
@@ -30,13 +30,13 @@
     <header class="page-heading">
         <div>
             <p class="eyebrow">Transaction operations</p>
-            <h1 class="page-title">Submit and inspect activity.</h1>
+            <h1 class="page-title">Send money and review your activity.</h1>
             <p class="page-subtitle">
-                Create a transaction, follow every persisted processing state, or search
-                the ledger using any of the backend's supported filters.
+                Send money, follow its progress, or search
+                your transaction history.
             </p>
         </div>
-        <span class="connection-pill">Live backend workflow</span>
+        <span class="connection-pill">Connected and ready</span>
     </header>
 
     <div class="two-column">
@@ -44,7 +44,7 @@
             <div class="panel__heading">
                 <div>
                     <h2 id="submit-heading">New transaction</h2>
-                    <p>Send a transfer to the processing endpoint.</p>
+                    <p>Enter the details for the transfer you’d like to make.</p>
                 </div>
             </div>
             <div class="panel__body">
@@ -70,7 +70,7 @@
                             <label for="transaction-amount">Amount (INR)</label>
                             <input class="input" id="transaction-amount" name="amount" type="number"
                                    min="0.01" step="0.01" placeholder="0.00" required>
-                            <p class="form-note">The backend assigns the transaction ID, timestamp, and initial status.</p>
+                            <p class="form-note">We’ll create the transaction reference and record the time for you.</p>
                         </div>
                     </div>
                     <div class="form-actions">
@@ -84,8 +84,8 @@
         <section class="panel" aria-labelledby="fetch-heading">
             <div class="panel__heading">
                 <div>
-                    <h2 id="fetch-heading">Fetch transactions</h2>
-                    <p>Select one search method and provide its criteria.</p>
+                    <h2 id="fetch-heading">Search transactions</h2>
+                    <p>Choose how you’d like to search, then enter the details below.</p>
                 </div>
             </div>
             <div class="panel__body">
@@ -139,7 +139,7 @@
                     </div>
 
                     <div class="form-actions">
-                        <button class="btn btn--primary" id="fetch-transactions" type="submit">Fetch transactions</button>
+                        <button class="btn btn--primary" id="fetch-transactions" type="submit">Search transactions</button>
                     </div>
                 </form>
             </div>
@@ -151,7 +151,7 @@
             <div>
                 <p class="eyebrow workflow-eyebrow">Live processing</p>
                 <h2 id="workflow-heading">Transaction workflow</h2>
-                <p id="workflow-summary">Waiting for a transaction to be submitted.</p>
+                <p id="workflow-summary">Your transfer progress will appear here.</p>
             </div>
             <div id="workflow-status"></div>
         </div>
@@ -164,24 +164,24 @@
             <ol class="workflow-steps" aria-label="Payment processing states">
                 <li class="workflow-step" data-workflow-step="1">
                     <span class="workflow-step__mark">1</span>
-                    <div><strong>Created</strong><span>Payment persisted</span></div>
+                    <div><strong>Created</strong><span>Your transfer was saved</span></div>
                 </li>
                 <li class="workflow-step" data-workflow-step="2">
                     <span class="workflow-step__mark">2</span>
-                    <div><strong>Validated</strong><span>Checks passed</span></div>
+                    <div><strong>Validated</strong><span>Your transfer details were checked</span></div>
                 </li>
                 <li class="workflow-step" data-workflow-step="3">
                     <span class="workflow-step__mark">3</span>
-                    <div><strong>Sent</strong><span>Network hand-off</span></div>
+                    <div><strong>Sent</strong><span>Your transfer was sent for processing</span></div>
                 </li>
                 <li class="workflow-step" data-workflow-step="4">
                     <span class="workflow-step__mark">4</span>
-                    <div><strong>Completed</strong><span>Confirmation received</span></div>
+                    <div><strong>Completed</strong><span>Your transfer is complete</span></div>
                 </li>
             </ol>
             <div class="workflow-failure" id="workflow-failure" hidden>
                 <strong>Processing stopped</strong>
-                <span>The backend marked this transaction as FAILED during validation or processing.</span>
+                <span>We couldn’t complete this transfer. Review the details and try again.</span>
             </div>
         </div>
     </section>
@@ -190,7 +190,7 @@
         <div class="panel__heading">
             <div>
                 <h2 id="results-heading">Transaction results</h2>
-                <p id="results-summary">Run a search to populate the ledger below.</p>
+                <p id="results-summary">Search for a transfer to see matching results here.</p>
             </div>
         </div>
         <div id="transaction-results">
@@ -198,14 +198,14 @@
                 <div>
                     <span class="empty-state__mark">T</span>
                     <h3>No search performed yet</h3>
-                    <p>Your matching transaction records will appear here.</p>
+                    <p>Your matching transfers will appear here.</p>
                 </div>
             </div>
         </div>
     </section>
 </main>
 
-<footer class="footer">Atomic · Transaction ledger</footer>
+<footer class="footer">Atomic · Your transfer history</footer>
 <script src="/js/common.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/transactions.js"></script>

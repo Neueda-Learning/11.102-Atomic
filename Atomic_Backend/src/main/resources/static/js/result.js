@@ -65,7 +65,7 @@
 
         return references.length
             ? references.join(", ")
-            : "No backend references were returned";
+            : "No transaction references are available";
     }
 
     async function copyReference() {
@@ -94,7 +94,7 @@
 
     function bindUtilityActions() {
         document.querySelector("#copy-reference")?.addEventListener("click", () => {
-            copyReference().catch(() => showFeedback("Unable to copy right now."));
+            copyReference().catch(() => showFeedback("We couldn’t copy that right now."));
         });
 
         document.querySelector("#print-receipt")?.addEventListener("click", () => {
@@ -168,12 +168,12 @@
             document.querySelector("#result-heading").textContent =
                 "All transfers completed.";
             document.querySelector(".result-copy").textContent =
-                "Every transaction in this batch was confirmed by the backend.";
+                "Every transfer in this batch was completed successfully.";
         } else {
             document.querySelector("#result-heading").textContent =
                 "Batch completed with issues.";
             document.querySelector(".result-copy").textContent =
-                "Completed transfers remain successful; failed rows are identified below.";
+                "Your successful transfers are complete. You can review the transfers that failed below.";
         }
     }
 

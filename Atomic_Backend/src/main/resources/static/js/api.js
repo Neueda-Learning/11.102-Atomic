@@ -200,8 +200,8 @@
 
         if (!response.ok) {
             const message = typeof body === "string"
-                ? body || `Request failed with status ${response.status}`
-                : body?.message ?? `Request failed with status ${response.status}`;
+                ? body || `We couldn’t complete that request (status ${response.status}).`
+                : body?.message ?? `We couldn’t complete that request (status ${response.status}).`;
             const error = new Error(message);
             error.status = response.status;
             throw error;

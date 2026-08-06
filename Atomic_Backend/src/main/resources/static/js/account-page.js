@@ -41,7 +41,7 @@
     function alertDetectedAt(alert) {
         const date = new Date(alert.alertTime);
         if (Number.isNaN(date.getTime())) {
-            return "Detection time unavailable";
+            return "We don’t have the alert time yet";
         }
         return new Intl.DateTimeFormat("en-IN", {
             day: "2-digit",
@@ -77,8 +77,8 @@
         if (!visibleAlerts.length) {
             dashboardAlertList.innerHTML = `
                 <div class="history-empty">
-                    <strong>No monitoring alerts here</strong>
-                    <span>New transaction signals will appear automatically.</span>
+                    <strong>You have no alerts in this view</strong>
+                    <span>New alerts will appear here as soon as they’re created.</span>
                 </div>
             `;
             return;
@@ -124,7 +124,7 @@
             }
             renderDashboardAlerts();
         } catch (error) {
-            dashboardAlertSummary.textContent = "Alerts could not be loaded.";
+            dashboardAlertSummary.textContent = "We couldn’t load your alerts.";
             dashboardAlertList.innerHTML = `
                 <p class="form-message form-message--error">Please refresh and try again.</p>
             `;
@@ -148,12 +148,12 @@
         }
 
         card.disabled = true;
-        dashboardAlertSummary.textContent = "Acknowledging alert…";
+        dashboardAlertSummary.textContent = "We’re acknowledging your alert…";
         try {
             dashboardAlerts[index] = await AtomicApi.acknowledgeAlert(dashboardAlerts[index]);
             renderDashboardAlerts();
         } catch (error) {
-            dashboardAlertSummary.textContent = error.message || "The alert could not be acknowledged.";
+            dashboardAlertSummary.textContent = error.message || "We couldn’t acknowledge this alert. Please try again.";
             card.disabled = false;
         }
     });
@@ -216,7 +216,7 @@
             : null;
 
         if (from && to && from > to) {
-            throw new Error("The From date cannot be later than the To date.");
+            throw new Error("Your start date cannot be after your end date.");
         }
 
         return { from, to };
@@ -259,7 +259,7 @@
         } catch (error) {
             history.summary.textContent = error.message;
             history.container.innerHTML =
-                '<p class="form-message form-message--error">Correct the selected date range.</p>';
+                '<p class="form-message form-message--error">Please check the dates you selected.</p>';
             return;
         }
 
@@ -308,7 +308,7 @@
                 : await AtomicApi.fetchTransactionsForCredit(user.accountNumber);
             renderHistory(type);
         } catch (error) {
-            history.summary.textContent = `Could not load ${type === "debit" ? "sent" : "received"} transactions.`;
+            history.summary.textContent = `We couldn’t load the transactions you’ve ${type === "debit" ? "sent" : "received"}.`;
             history.container.innerHTML =
                 '<p class="form-message form-message--error">Please refresh and try again.</p>';
         }

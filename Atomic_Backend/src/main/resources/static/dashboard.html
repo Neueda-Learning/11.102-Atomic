@@ -45,7 +45,7 @@
         <div>
             <p class="eyebrow">Account overview</p>
             <h1>Welcome, <span data-user-name>Atomic user</span>.</h1>
-            <p>Your authenticated account is used automatically as the debit account for every transfer.</p>
+            <p>We’ll use the account you’re signed in with whenever you make a transfer.</p>
         </div>
         <span class="session-pill">Session active</span>
     </header>
@@ -64,7 +64,7 @@
         <section class="panel">
             <div class="panel__head">
                 <h2>Account details</h2>
-                <p>Identity held by your authenticated session.</p>
+                <p>Here are the details for the account you’re signed in with.</p>
             </div>
             <div class="panel__body">
                 <dl class="detail-list">
@@ -77,14 +77,14 @@
         <section class="panel action-card">
             <span class="action-card__number">01</span>
             <h2>Make a transfer</h2>
-            <p>Enter a destination and amount. Your debit account is inserted by the server session.</p>
+            <p>Tell us where you’d like to send money and how much. We’ll take care of the debit account.</p>
             <a href="/transaction.html">Start transfer →</a>
         </section>
 
         <section class="panel action-card">
             <span class="action-card__number">02</span>
             <h2>Monitoring rules</h2>
-            <p>Review the rule catalogue already provided by the project.</p>
+            <p>Review and manage the rules Atomic uses to monitor your transactions.</p>
             <a href="/rules.html">Open rules →</a>
         </section>
 
@@ -93,7 +93,7 @@
                 <div>
                     <p class="eyebrow">Live monitoring</p>
                     <h2 id="dashboard-alerts-heading">Your alerts</h2>
-                    <p>New alerts appear as opened. Select one to acknowledge it.</p>
+                    <p>We’ll show new alerts as opened. Select one when you’re ready to acknowledge it.</p>
                 </div>
                 <div class="dashboard-alerts__actions">
                     <label for="dashboard-alert-filter">Status</label>
@@ -128,9 +128,9 @@
         <section class="history-section" aria-labelledby="activity-heading">
             <div class="history-section__head">
                 <div>
-                    <p class="eyebrow">Complete ledger</p>
+                    <p class="eyebrow">Your full history</p>
                     <h2 id="activity-heading">Your transaction activity</h2>
-                    <p>View every outgoing and incoming transfer, or narrow either list using its calendar.</p>
+                    <p>Review the money you’ve sent and received, or use the date filters to find a specific transfer.</p>
                 </div>
                 <button class="button button--secondary" id="refresh-history" type="button">Refresh both</button>
             </div>
@@ -184,7 +184,7 @@
     </div>
 </main>
 
-<footer class="footer">Atomic · Authenticated payment workspace</footer>
+<footer class="footer">Atomic · Your secure payment workspace</footer>
 <script src="/js/api.js"></script>
 <script src="/js/account-page.js"></script>
 </body>
