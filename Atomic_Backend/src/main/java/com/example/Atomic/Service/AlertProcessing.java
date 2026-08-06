@@ -61,7 +61,7 @@ public class AlertProcessing {
             // logic to check if the alert should be generated or not
             //high value transaction detection logic
             for(Transactions transaction : transactions) {
-                if(transaction.getAmount() > rule1.getAlertThreshold()) {
+                if(transaction.getAmount() > rule1.getAlertSeverity()) {
                     checkAlert = true;
                     transStore1.add(transaction);
                 }
@@ -71,8 +71,8 @@ public class AlertProcessing {
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule1.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, rule1.getAlertID(), 1, Instant.now(), null);
-                alert.save(newAlert);List.of(newAlert);
+                Alert newAlert = new Alert(rule1.getAlertID(), 1, Instant.now(), null);
+                alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
         }
@@ -86,7 +86,7 @@ public class AlertProcessing {
                     .filter(transaction -> transaction.getTimeDate() != null)
                     .filter(transaction -> transaction.getTimeDate().isAfter(fiveMinutesAgo))
                     .count();
-            if(count > rule2.getAlertThreshold()) {
+            if(count > rule2.getAlertSeverity()) {
                 checkAlert = true;
                 for (Transactions transaction : transactions) {
                     if (transaction.getTimeDate() != null && transaction.getTimeDate().isAfter(fiveMinutesAgo)) {
@@ -98,7 +98,7 @@ public class AlertProcessing {
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule2.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, rule2.getAlertID(), 1, Instant.now(), null);
+                Alert newAlert = new Alert(rule2.getAlertID(), 1, Instant.now(), null);
                 alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
@@ -121,14 +121,14 @@ public class AlertProcessing {
                 }
             }
 
-            if(suspiciousTransaction > rule3.getAlertThreshold()) {
+            if(suspiciousTransaction > rule3.getAlertSeverity()) {
                 checkAlert = true;
             }
 
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule3.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, rule3.getAlertID(), 1, Instant.now(), null);
+                Alert newAlert = new Alert(rule3.getAlertID(), 1, Instant.now(), null);
                 alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
@@ -154,7 +154,7 @@ public class AlertProcessing {
                 }
             }
 
-            if (totalTodayAmount > rule4.getAlertThreshold()) {
+            if (totalTodayAmount > rule4.getAlertSeverity()) {
                 checkAlert = true;
             }
 
@@ -162,7 +162,7 @@ public class AlertProcessing {
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule4.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, rule4.getAlertID(), 1, Instant.now(), null);
+                Alert newAlert = new Alert(rule4.getAlertID(), 1, Instant.now(), null);
                 alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
@@ -187,7 +187,7 @@ public class AlertProcessing {
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule5.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, rule5.getAlertID(), 1, Instant.now(), null);
+                Alert newAlert = new Alert(rule5.getAlertID(), 1, Instant.now(), null);
                 alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
@@ -212,7 +212,7 @@ public class AlertProcessing {
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule6.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, rule6.getAlertID(), 1, Instant.now(), null);
+                Alert newAlert = new Alert(rule6.getAlertID(), 1, Instant.now(), null);
                 alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
