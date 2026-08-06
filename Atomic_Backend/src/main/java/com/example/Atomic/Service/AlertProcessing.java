@@ -48,20 +48,21 @@ public class AlertProcessing {
     }
 
     // Hardcoded thresholds for each rule (no threshold field exists in Rules model)
-    private static final double RULE1_HIGH_VALUE_THRESHOLD = 1000.0;   // alert if single transaction > $1000
+    private static final double RULE1_HIGH_VALUE_THRESHOLD = 1000.0;   // alert if single transaction > 1000
     private static final int    RULE2_VELOCITY_THRESHOLD   = 10;         // alert if more than 10 transactions in last 5 minutes
-    private static final int    RULE3_NIGHT_TX_THRESHOLD   = 5;         // alert if more than 5 night-time transactions (12AM-6AM)
-    private static final double RULE4_DAILY_LIMIT          = 5000.0;   // alert if daily total exceeds $5000
+    private static final int    RULE3_NIGHT_TX_THRESHOLD   = 5;         // alert if more than 5 night time transactions (12-6 AM)
+    private static final double RULE4_DAILY_LIMIT          = 5000.0;   // alert if daily total exceeds 5000
     private static final int    RULE6_FAILED_TX_LIMIT      = 3;         // alert if more than 3 failed transactions today
 
      // generateAlert method but only for rule 6
-    public List<Alert> generateAlert6(long accountNumber, int totalSeverity) {
+    public void generateAlert6(long accountNumber, int totalSeverity) throws InterruptedException {
+        Thread.sleep(1000);
         List<Transactions> transactions = trans.findAllByDebitAccountNumberEquals(accountNumber);
         List<Rules> activeRules = rules.findAllByAlertStatusEquals(1);
         List<Alert> generatedAlerts = new ArrayList<>();
 
         Rules rule6 = activeRules.stream()
-                .filter(obj -> "Multiple Failed Transactions ".equals(obj.getAlertName()))
+                .filter(obj -> "Multiple Failed Transactions".equals(obj.getAlertName()))
                 .findFirst()
                 .orElse(null);
 
@@ -93,18 +94,18 @@ public class AlertProcessing {
             if (checkAlert == true) {
                 totalSeverity += rule6.getAlertSeverity();
                 Alert newAlert = new Alert(accountNumber, rule6.getAlertID(), 1, Instant.now(), null);
-                alert.save(newAlert);
+                //alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
         }
         alert.saveAll(generatedAlerts);
-        return generatedAlerts;
+        //return generatedAlerts;
     }
 
-
-    public List<Alert> generateAlert(long accountNumber, int totalSeverity) {
-        // On submission of any transaction this method will be called
-        // to check the rules and generate an alert if any rule is violated.
+    // On submission of any transaction this method will be called
+    // to check the rules and generate an alert if any rule is violated.
+    public void generateAlert(long accountNumber, int totalSeverity) throws InterruptedException {
+        Thread.sleep(2000);
         List<Transactions> transactions = trans.findAllByDebitAccountNumberEquals(accountNumber);
         List<Rules> activeRules = rules.findAllByAlertStatusEquals(1);
         List<Alert> generatedAlerts = new ArrayList<>();
@@ -114,21 +115,21 @@ public class AlertProcessing {
         Rules rule3;
         Rules rule4;
         Rules rule5;
-        Rules rule6;
+        //Rules rule6;
 
-        List<Transactions> transStore1 = new ArrayList<>();
-        List<Transactions> transStore2 = new ArrayList<>();
-        List<Transactions> transStore3 = new ArrayList<>();
-        List<Transactions> transStore4 = new ArrayList<>();
-        List<Transactions> transStore5 = new ArrayList<>();
-        List<Transactions> transStore6 = new ArrayList<>();
+        //List<Transactions> transStore1 = new ArrayList<>();
+        //List<Transactions> transStore2 = new ArrayList<>();
+        //List<Transactions> transStore3 = new ArrayList<>();
+        //List<Transactions> transStore4 = new ArrayList<>();
+        //List<Transactions> transStore5 = new ArrayList<>();
+        //List<Transactions> transStore6 = new ArrayList<>();
 
-        rule1 = activeRules.stream().filter(obj -> "High Value Transaction Detection".equals(obj.getAlertName())).findFirst().orElse(null);
-        rule2 = activeRules.stream().filter(obj -> "Frequent Transaction Exceeds Limit".equals(obj.getAlertName())).findFirst().orElse(null);
-        rule3 = activeRules.stream().filter(obj -> "Suspicious Transaction Detection".equals(obj.getAlertName())).findFirst().orElse(null);
-        rule4 = activeRules.stream().filter(obj -> "Transaction Amount Exceeds Limit".equals(obj.getAlertName())).findFirst().orElse(null);
-        rule5 = activeRules.stream().filter(obj -> "New Payee detection".equals(obj.getAlertName())).findFirst().orElse(null);
-        rule6 = activeRules.stream().filter(obj -> "Multiple Failed Transactions ".equals(obj.getAlertName())).findFirst().orElse(null);
+        rule1 = activeRules.stream().filter(obj -> "Amount Threshold Check".equals(obj.getAlertName())).findFirst().orElse(null);
+        rule2 = activeRules.stream().filter(obj -> "Account Velocity Check".equals(obj.getAlertName())).findFirst().orElse(null);
+        rule5 = activeRules.stream().filter(obj -> "New Payee Check".equals(obj.getAlertName())).findFirst().orElse(null);
+        rule4 = activeRules.stream().filter(obj -> "Daily Limit Threshold Check".equals(obj.getAlertName())).findFirst().orElse(null);
+        rule3 = activeRules.stream().filter(obj -> "Suspicious Account Activity".equals(obj.getAlertName())).findFirst().orElse(null);
+        //rule6 = activeRules.stream().filter(obj -> "Multiple Failed Transactions ".equals(obj.getAlertName())).findFirst().orElse(null);
 
         if(rule1 != null)
         {
@@ -136,18 +137,18 @@ public class AlertProcessing {
             // logic to check if the alert should be generated or not
             //high value transaction detection logic
             for(Transactions transaction : transactions) {
-                if(transaction.getAmount() > RULE1_HIGH_VALUE_THRESHOLD) {
+                if (transaction.getAmount() > RULE1_HIGH_VALUE_THRESHOLD) {
                     checkAlert = true;
-                    transStore1.add(transaction);
+                    //transStore1.add(transaction);
+                    break;
                 }
             }
-
 
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule1.getAlertSeverity();
                 Alert newAlert = new Alert(accountNumber, rule1.getAlertID(), 1, Instant.now(), null);
-                alert.save(newAlert);List.of(newAlert);
+                //alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
         }
@@ -165,7 +166,7 @@ public class AlertProcessing {
                 checkAlert = true;
                 for (Transactions transaction : transactions) {
                     if (transaction.getTimeDate() != null && transaction.getTimeDate().isAfter(fiveMinutesAgo)) {
-                        transStore2.add(transaction);
+                       // transStore2.add(transaction);
                     }
                 }
             }
@@ -192,7 +193,7 @@ public class AlertProcessing {
                 int hour = transaction.getTimeDate().atZone(java.time.ZoneId.systemDefault()).getHour();
                 if (hour >= 0 && hour <= 6) {
                     suspiciousTransaction++;
-                    transStore3.add(transaction);
+                    //transStore3.add(transaction);
                 }
             }
 
@@ -225,15 +226,13 @@ public class AlertProcessing {
                         .toLocalDate();
                 if (today.equals(txDate)) {
                     totalTodayAmount += transaction.getAmount();
-                    transStore4.add(transaction);
+                    //transStore4.add(transaction);
                 }
             }
 
             if (totalTodayAmount > RULE4_DAILY_LIMIT) {
                 checkAlert = true;
             }
-
-
             // Generate alert
             if(checkAlert == true) {
                 totalSeverity += rule4.getAlertSeverity();
@@ -283,7 +282,7 @@ public class AlertProcessing {
                 // Step 4: If not seen before, it means this is a brand new payee - trigger the alert
                 if (seenBefore == false) {
                     checkAlert = true;
-                    transStore5.add(latestTransaction);
+                    //transStore5.add(latestTransaction);
                 }
             }
 
@@ -295,12 +294,12 @@ public class AlertProcessing {
                 generatedAlerts.add(newAlert);
             }
         }
-        if(rule6 != null)
-        {
-            List<Alert> rule6Alerts = generateAlert6(accountNumber, totalSeverity);
-            generatedAlerts.addAll(rule6Alerts);
-        }
+//        if(rule6 != null)
+//        {
+//            List<Alert> rule6Alerts = generateAlert6(accountNumber, totalSeverity);
+//            generatedAlerts.addAll(rule6Alerts);
+//        }
         alert.saveAll(generatedAlerts);
-        return generatedAlerts;
+        //return generatedAlerts;
     }
 }

@@ -13,7 +13,7 @@ public class TransactionValidation {
     TransactionProcessing transProcessing;
     @Autowired
     AlertProcessing alertProcessing;
-    public String validateTransaction(Transactions transaction) {
+    public String validateTransaction(Transactions transaction) throws InterruptedException {
         // 0 < amount <= wallet balance, credit and debit account numbers should be 16 digits each
         // and they must not be equal
         if(transaction.getAmount() <= 0) {

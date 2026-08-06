@@ -16,7 +16,7 @@ public class TransactionProcessing {
     @Autowired
     AlertProcessing alertProcessing;
 
-    public String processTransaction(Transactions transaction) {
+    public String processTransaction(Transactions transaction) throws InterruptedException {
 
         // Resolve both accounts before touching any balance
         User debitUser = user.findByAccountNumber(transaction.getDebitAccountNumber());
