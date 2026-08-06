@@ -70,12 +70,12 @@
 
     function renderTransactions(transactions) {
         if (!transactions.length) {
-            resultSummary.textContent = "No transactions matched the selected criteria.";
+            resultSummary.textContent = "No transactions matched your search.";
             resultContainer.innerHTML = `
                 <div class="empty-state">
                     <div>
                         <span class="empty-state__mark">0</span>
-                        <h3>No matching records</h3>
+                        <h3>No matching transfers</h3>
                         <p>Try another account number or widen the selected range.</p>
                     </div>
                 </div>
@@ -210,7 +210,7 @@
         if (Number(current.status) === 4) {
             AtomicUI.showToast("Transaction completed", `Transaction #${id} was confirmed.`);
         } else if (Number(current.status) === 5) {
-            AtomicUI.showToast("Transaction failed", `Transaction #${id} did not pass processing.`, "error");
+            AtomicUI.showToast("Transaction failed", `We couldn’t complete transaction #${id}.`, "error");
         }
     }
 
@@ -248,30 +248,30 @@
 
         try {
             const path = createSearchRequest();
-            AtomicUI.setButtonLoading(button, true, "Fetching…");
-            resultSummary.textContent = "Loading matching transactions…";
+            AtomicUI.setButtonLoading(button, true, "Searching…");
+            resultSummary.textContent = "Searching your transactions…";
             resultContainer.innerHTML = `
                 <div class="empty-state">
                     <div>
                         <span class="empty-state__mark">…</span>
-                        <h3>Fetching transactions</h3>
+                        <h3>Searching your transactions</h3>
                     </div>
                 </div>
             `;
             const payload = await AtomicUI.request(path);
             renderTransactions(normaliseTransactions(payload));
         } catch (error) {
-            resultSummary.textContent = "The search could not be completed.";
+            resultSummary.textContent = "We couldn’t complete your search.";
             resultContainer.innerHTML = `
                 <div class="empty-state">
                     <div>
                         <span class="empty-state__mark">!</span>
-                        <h3>Could not fetch transactions</h3>
+                        <h3>We couldn’t load your transactions</h3>
                         <p>${AtomicUI.escapeHtml(error.message)}</p>
                     </div>
                 </div>
             `;
-            AtomicUI.showToast("Fetch failed", error.message, "error");
+            AtomicUI.showToast("Search failed", error.message, "error");
         } finally {
             AtomicUI.setButtonLoading(button, false);
         }

@@ -36,11 +36,11 @@
             <p class="eyebrow">Rule configuration</p>
             <h1 class="page-title">Shape how Atomic detects risk.</h1>
             <p class="page-subtitle">
-                Fetch the persisted rule catalogue and update names, activation states,
-                and risk severities through the Spring backend.
+                Review the rules Atomic uses to spot unusual activity. You can rename a rule,
+                turn it on or off, and change its severity.
             </p>
         </div>
-        <span class="connection-pill">Live backend data</span>
+        <span class="connection-pill">Up to date</span>
     </header>
 
 <!--    <div class="mock-banner">-->
@@ -53,7 +53,7 @@
             <div class="panel__heading">
                 <div>
                     <h2 id="update-rule-heading">Update a rule</h2>
-                    <p>Change its enabled state and risk severity.</p>
+                    <p>Choose whether the rule is active and how urgently its alerts should be treated.</p>
                 </div>
             </div>
             <div class="panel__body">
@@ -62,7 +62,7 @@
                         <div class="form-field form-field--full">
                             <label for="rule-name">Rule</label>
                             <select class="select" id="rule-name" required disabled>
-                                <option value="">Fetch rules to begin</option>
+                                <option value="">Load your rules to begin</option>
                             </select>
                         </div>
                         <div class="form-field form-field--full">
@@ -96,15 +96,15 @@
         <section class="panel" aria-labelledby="rule-catalogue-heading">
             <div class="panel__heading">
                 <div>
-                    <h2 id="rule-catalogue-heading">Detection catalogue</h2>
-                    <p>Rules currently stored in the MySQL database.</p>
+                    <h2 id="rule-catalogue-heading">Your monitoring rules</h2>
+                    <p>These are the rules Atomic currently uses to monitor activity.</p>
                 </div>
-                <button class="btn btn--secondary" id="fetch-rules" type="button">Fetch rules</button>
+                <button class="btn btn--secondary" id="fetch-rules" type="button">Refresh rules</button>
             </div>
             <section class="chart-block" aria-labelledby="rule-chart-heading">
                 <div class="chart-block__head">
                     <h3 id="rule-chart-heading">Rules by severity</h3>
-                    <p>Count of rules in each severity level for the current filter.</p>
+                    <p>See how the rules in your current view are grouped by severity.</p>
                 </div>
                 <div class="chart-wrap">
                     <canvas id="rule-severity-chart" role="img" aria-label="Bar chart showing rule counts by severity"></canvas>
@@ -112,7 +112,7 @@
                 </div>
             </section>
             <div class="table-toolbar">
-                <span class="table-toolbar__summary" id="rule-summary">No rules fetched.</span>
+                <span class="table-toolbar__summary" id="rule-summary">No rules loaded yet.</span>
                 <div class="inline-controls">
                     <label class="field-label" for="rule-filter">Filter</label>
                     <select class="select" id="rule-filter">
@@ -126,8 +126,8 @@
                 <div class="empty-state">
                     <div>
                         <span class="empty-state__mark">R</span>
-                        <h3>Fetch the rule catalogue</h3>
-                        <p>The persisted detection controls will be rendered here.</p>
+                        <h3>Load your monitoring rules</h3>
+                        <p>Your rules will appear here when they’re ready.</p>
                     </div>
                 </div>
             </div>

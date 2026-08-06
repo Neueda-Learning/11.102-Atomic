@@ -12,15 +12,15 @@
     <section class="result-card" aria-labelledby="result-heading">
         <div class="result-card__hero">
             <span class="result-mark" aria-hidden="true">✓</span>
-            <p class="eyebrow">Backend confirmed</p>
+            <p class="eyebrow">Payment confirmed</p>
             <h1 id="result-heading">Transfer completed.</h1>
-            <p class="result-copy">Funds moved successfully and your receipt details are ready below.</p>
+            <p class="result-copy">Your transfer is complete. You’ll find the receipt details below.</p>
         </div>
 
         <section class="batch-result" id="batch-result" hidden>
             <p class="batch-result__summary" id="batch-result-summary"></p>
             <div class="batch-result-list" id="batch-result-list"></div>
-            <p class="batch-result__balance">Current session balance: <strong id="batch-result-balance">—</strong></p>
+            <p class="batch-result__balance">Your current balance: <strong id="batch-result-balance">—</strong></p>
         </section>
 
         <dl class="detail-list result-details" id="single-result">
@@ -28,8 +28,8 @@
             <div><dt>Amount</dt><dd id="result-amount">—</dd></div>
             <div><dt>From</dt><dd id="result-debit">—</dd></div>
             <div><dt>To</dt><dd id="result-credit">—</dd></div>
-            <div><dt>Backend status</dt><dd id="result-status" class="badge badge--completed">Completed</dd></div>
-            <div><dt>Current remaining balance</dt><dd id="result-balance">—</dd></div>
+            <div><dt>Transfer status</dt><dd id="result-status" class="badge badge--completed">Completed</dd></div>
+            <div><dt>Your remaining balance</dt><dd id="result-balance">—</dd></div>
         </dl>
 
         <div class="result-tools" aria-label="Receipt tools">
@@ -41,7 +41,7 @@
         <div class="result-actions">
             <a class="button button--primary" href="/transaction.html">Make another transfer</a>
             <a class="button button--secondary" href="/dashboard.html">Dashboard</a>
-            <a class="button button--secondary" href="/transactions.html">Return back</a>
+            <a class="button button--secondary" href="/transactions.html">View transfer history</a>
         </div>
     </section>
 </main>

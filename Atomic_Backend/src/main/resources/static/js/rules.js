@@ -84,7 +84,7 @@
         if (typeof window.Chart !== "function") {
             ruleChartCanvas.hidden = true;
             ruleChartEmpty.hidden = false;
-            ruleChartEmpty.textContent = "Chart library is unavailable.";
+            ruleChartEmpty.textContent = "We can’t display the chart right now.";
             return;
         }
 
@@ -156,8 +156,8 @@
                 <div class="empty-state">
                     <div>
                         <span class="empty-state__mark">0</span>
-                        <h3>No rules in this state</h3>
-                        <p>Select another filter or add seed data to the database.</p>
+                        <h3>No rules match this filter</h3>
+                        <p>Choose another filter to look for a different rule.</p>
                     </div>
                 </div>
             `;
@@ -201,30 +201,30 @@
         const selectedRuleId = Number(ruleSelect.value);
 
         try {
-            AtomicUI.setButtonLoading(button, true, "Fetching…");
-            summary.textContent = "Loading persisted rules…";
+            AtomicUI.setButtonLoading(button, true, "Loading…");
+            summary.textContent = "Loading your rules…";
             const payload = await AtomicUI.request("/home/rules");
             rules = (Array.isArray(payload) ? payload : []).map(normaliseRule);
             populateRuleSelect(selectedRuleId);
             syncRulesView();
             if (showNotification) {
-                AtomicUI.showToast("Rules fetched", `${rules.length} persisted rules loaded.`);
+                AtomicUI.showToast("Rules loaded", `${rules.length} rule${rules.length === 1 ? " is" : "s are"} ready to review.`);
             }
         } catch (error) {
             setUpdateEnabled(false);
-            summary.textContent = "Rules could not be fetched.";
+            summary.textContent = "We couldn’t load your rules.";
             table.innerHTML = `
                 <div class="empty-state">
                     <div>
                         <span class="empty-state__mark">!</span>
-                        <h3>Backend unavailable</h3>
-                        <p>${AtomicUI.escapeHtml(error.message)}</p>
+                        <h3>We couldn’t load your rules</h3>
+                        <p>Please try again in a moment.</p>
                     </div>
                 </div>
             `;
             renderRuleChart([]);
             if (showNotification) {
-                AtomicUI.showToast("Fetch failed", error.message, "error");
+                AtomicUI.showToast("Couldn’t load rules", error.message, "error");
             }
         } finally {
             AtomicUI.setButtonLoading(button, false);
@@ -258,7 +258,7 @@
             await fetchRules(false);
             ruleSelect.value = String(ruleId);
             syncFormToRule();
-            AtomicUI.showToast("Rule updated", `${name} was saved to the database.`);
+            AtomicUI.showToast("Rule updated", `${name} has been updated.`);
         } catch (error) {
             AtomicUI.showToast("Update failed", error.message, "error");
         } finally {

@@ -12,9 +12,9 @@
     <section class="processing-card processing-card--batch" aria-labelledby="processing-heading" aria-live="polite">
         <header class="processing-card__head">
             <div>
-                <p class="eyebrow">Live backend workflow</p>
+                <p class="eyebrow">We’re keeping track</p>
                 <h1 id="processing-heading">Processing your transfers.</h1>
-                <p id="processing-copy">Fetching the latest status for every submitted transaction…</p>
+                <p id="processing-copy">We’re checking the progress of each transfer for you…</p>
             </div>
             <span class="badge badge--created" id="overall-status">Created</span>
         </header>
@@ -28,18 +28,18 @@
 
         <div class="batch-processing-list" id="batch-processing-list">
             <div class="history-empty">
-                <strong>Locating submitted transactions</strong>
-                <span>The backend ledger is being checked now.</span>
+                <strong>Finding your transfers</strong>
+                <span>We’re checking their latest progress now.</span>
             </div>
         </div>
 
         <div class="poll-note" id="poll-note">
             <span class="spinner" aria-hidden="true"></span>
-            <span id="poll-message">Fetching the latest transaction statuses…</span>
+            <span id="poll-message">Checking for updates…</span>
         </div>
 
         <div class="processing-actions">
-            <button class="button button--secondary" id="retry-status" type="button" hidden>Retry status check</button>
+            <button class="button button--secondary" id="retry-status" type="button" hidden>Check again</button>
             <a class="button button--ghost" href="/dashboard.html">View dashboard</a>
             <a class="button button--ghost" href="/transaction.html">Create another batch</a>
         </div>

@@ -120,7 +120,7 @@
             chartCanvas.hidden = true;
             chartEmpty.hidden = false;
             chartEmpty.textContent = total
-                ? "The chart library is unavailable."
+                ? "We can’t display the chart right now."
                 : "No alert data matches these filters.";
             return;
         }
@@ -157,7 +157,7 @@
     }
 
     function renderAlertQueue(visibleAlerts) {
-        summary.textContent = `${visibleAlerts.length} of ${alerts.length} alert${alerts.length === 1 ? "" : "s"} shown for account ${currentAccount}.`;
+        summary.textContent = `Showing ${visibleAlerts.length} of ${alerts.length} alert${alerts.length === 1 ? "" : "s"} for account ${currentAccount}.`;
 
         if (!visibleAlerts.length) {
             table.innerHTML = `
@@ -193,7 +193,7 @@
                             </span>
                             <span class="alert-card__status">
                                 <span class="badge badge--${status.className}">${status.label}</span>
-                                <small>${opened ? "Select to acknowledge" : Number(alert.status) === 2 ? "Closes when this page is left" : `Closed ${AtomicUI.escapeHtml(formatTime(alert.resolutionTime))}`}</small>
+                                <small>${opened ? "Select to acknowledge" : Number(alert.status) === 2 ? "We’ll close it when you leave this page" : `Closed ${AtomicUI.escapeHtml(formatTime(alert.resolutionTime))}`}</small>
                             </span>
                         </button>
                     `;
@@ -230,12 +230,12 @@
             }
             render();
         } catch (error) {
-            summary.textContent = "Alerts could not be loaded.";
+            summary.textContent = "We couldn’t load your alerts.";
             table.innerHTML = `
                 <div class="empty-state">
                     <div>
                         <span class="empty-state__mark">!</span>
-                        <h3>Could not reach the alert service</h3>
+                        <h3>We couldn’t load your alerts</h3>
                         <p>Refresh the page or try again in a moment.</p>
                     </div>
                 </div>
@@ -261,15 +261,15 @@
         }
 
         card.disabled = true;
-        summary.textContent = "Acknowledging the selected alert…";
+        summary.textContent = "We’re acknowledging your alert…";
         try {
             alerts[index] = await AtomicApi.acknowledgeAlert(alerts[index]);
             render();
             AtomicUI.showToast("Alert acknowledged", "The alert will close when you leave this page.");
         } catch (error) {
             card.disabled = false;
-            summary.textContent = error.message || "The alert could not be acknowledged.";
-            AtomicUI.showToast("Acknowledgement failed", summary.textContent, "error");
+            summary.textContent = error.message || "We couldn’t acknowledge this alert. Please try again.";
+            AtomicUI.showToast("Couldn’t acknowledge alert", summary.textContent, "error");
         }
     });
 

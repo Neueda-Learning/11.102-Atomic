@@ -49,7 +49,7 @@
             message.classList.add("form-message--error");
             message.textContent = error.status === 401
                 ? "The email or password is incorrect."
-                : "Login could not be completed. Check that the backend is running.";
+                : "We couldn’t sign you in right now. Please try again in a moment.";
         } finally {
             AtomicApi.setButtonLoading(button, false);
         }

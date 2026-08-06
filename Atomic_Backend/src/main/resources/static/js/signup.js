@@ -24,7 +24,7 @@
             location.replace("/login.html?created=1");
         } catch (error) {
             message.classList.add("form-message--error");
-            message.textContent = error.message || "Account creation failed.";
+            message.textContent = error.message || "We couldn’t create your account. Please try again.";
         } finally {
             AtomicApi.setButtonLoading(button, false);
         }

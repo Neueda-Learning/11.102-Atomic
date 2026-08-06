@@ -96,7 +96,7 @@
 
     function itemStatus(item) {
         if (item.submissionState === "failed" && !item.transactionId) {
-            return { label: "Request failed", className: "failed" };
+            return { label: "Couldn’t submit", className: "failed" };
         }
         if (!item.status) {
             return { label: "Locating", className: "created" };
@@ -117,15 +117,15 @@
         if (!pending && !failed) {
             overallStatus.className = "badge badge--completed";
             overallStatus.textContent = "Completed";
-            copy.textContent = "Every submitted transfer has completed successfully.";
+            copy.textContent = "All of your transfers were completed successfully.";
         } else if (!pending && failed) {
             overallStatus.className = "badge badge--failed";
-            overallStatus.textContent = "Finished with failures";
-            copy.textContent = `${completed} completed and ${failed} failed.`;
+            overallStatus.textContent = "Some transfers failed";
+            copy.textContent = `${completed} of your transfers completed, and ${failed} couldn’t be completed.`;
         } else {
             overallStatus.className = "badge badge--sent";
             overallStatus.textContent = "In progress";
-            copy.textContent = `${pending} transfer${pending === 1 ? " is" : "s are"} queued or processing.`;
+            copy.textContent = `${pending} transfer${pending === 1 ? " is" : "s are"} still waiting or being processed.`;
         }
 
         list.innerHTML = batch.map((item, index) => {
@@ -249,8 +249,8 @@
 
         const allCompleted = batch.every((item) => Number(item.status) === 4);
         pollMessage.textContent = allCompleted
-            ? "All transfers completed. Opening the batch receipt…"
-            : "Processing finished with one or more failures. Opening the result…";
+            ? "Your transfers are complete. Opening your receipt…"
+            : "We’ve finished processing your transfers. Opening the results…";
 
         await new Promise((resolve) => window.setTimeout(resolve, 900));
         location.replace(allCompleted ? "/success.html" : "/failed.html");
@@ -284,14 +284,14 @@
                 && new Date(item.processingTime).getTime() > Date.now()).length;
 
             pollMessage.textContent = futureCount
-                ? `${futureCount} scheduled transfer${futureCount === 1 ? " is" : "s are"} waiting for the selected minute.`
-                : "Waiting for the scheduler and checking the backend again…";
+                ? `${futureCount} scheduled transfer${futureCount === 1 ? " will" : "s will"} start at the time you selected.`
+                : "Your transfers are still being processed. We’ll check again shortly…";
 
             window.setTimeout(checkStatuses, nextPollDelay());
         } catch (error) {
             pollNote.hidden = true;
             retryButton.hidden = false;
-            copy.textContent = "The latest statuses could not be fetched.";
+            copy.textContent = "We couldn’t check the latest progress. Please try again.";
             pollMessage.textContent = error.message;
 
             if (error.status === 401) {

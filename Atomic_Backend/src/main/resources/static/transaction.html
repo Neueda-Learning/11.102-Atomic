@@ -43,9 +43,9 @@
 <main class="shell">
     <header class="page-heading">
         <div>
-            <p class="eyebrow">Multi-transfer setup</p>
-            <h1>Create one or many transfers.</h1>
-            <p>Add any number of destinations and processing times. The frontend submits every queued transfer through its own backend request.</p>
+            <p class="eyebrow">Set up your transfers</p>
+            <h1>Create one transfer or several at once.</h1>
+            <p>Add each account you want to pay, choose when to send the money, and we’ll handle every transfer separately.</p>
         </div>
         <span class="session-pill">Debit account secured</span>
     </header>
@@ -60,19 +60,19 @@
                 <div><dt>Transfers queued</dt><dd id="queued-count">0</dd></div>
                 <div><dt>Queued total</dt><dd id="queued-total">₹0.00</dd></div>
             </dl>
-            <p class="account-card__note">There is no fixed frontend limit. Add another destination after every entry.</p>
+            <p class="account-card__note">Add as many destinations as you need—there’s no set limit.</p>
         </aside>
 
         <div class="transfer-workspace">
             <section class="panel" aria-labelledby="transfer-heading">
                 <div class="panel__head">
                     <h2 id="transfer-heading">Add a transfer</h2>
-                    <p>Choose one destination, amount and processing minute, then add it to the queue.</p>
+                    <p>Enter where you want to send money, how much to send, and when you’d like it processed.</p>
                 </div>
                 <div class="panel__body">
                     <form class="form" id="transaction-form">
                         <div class="field">
-                            <label for="debit-account">Debit account (from session)</label>
+                            <label for="debit-account">Your debit account</label>
                             <input id="debit-account" type="text" readonly tabindex="-1">
                         </div>
 
@@ -95,7 +95,7 @@
                         <div class="field">
                             <label for="repeat-count">Number of repetitions</label>
                             <input id="repeat-count" type="number" min="1" step="1" value="1" required>
-                            <p class="field-note">Each repetition becomes a separate transaction and API request.</p>
+                            <p class="field-note">We’ll create a separate transfer for each repetition.</p>
                             <p class="field-note field-note--live" id="repeat-feedback" aria-live="polite"></p>
                         </div>
 
@@ -106,14 +106,14 @@
                                     <input type="radio" name="processing-mode" value="immediate" checked>
                                     <span>
                                         <strong>Process now</strong>
-                                        <small>Use the existing immediate submission endpoint.</small>
+                                        <small>Send this transfer as soon as you submit the queue.</small>
                                     </span>
                                 </label>
                                 <label class="timing-option">
                                     <input type="radio" name="processing-mode" value="scheduled">
                                     <span>
                                         <strong>Schedule for later</strong>
-                                        <small>Store it at status 1 until the selected minute.</small>
+                                        <small>Keep this transfer queued until the time you choose.</small>
                                     </span>
                                 </label>
                             </div>
@@ -122,13 +122,13 @@
                         <div class="field schedule-field" id="schedule-field" hidden>
                             <label for="processing-time">Scheduled date and time</label>
                             <input id="processing-time" type="datetime-local" step="60">
-                            <p class="field-note">Choose the local date, hour and minute. The backend changes the seconds to :59.</p>
+                            <p class="field-note">Choose the date and time when you’d like us to process this transfer.</p>
                             <p class="field-note field-note--live" id="processing-time-feedback" aria-live="polite"></p>
                         </div>
 
                         <section class="transfer-preview" aria-live="polite">
                             <div><span>Transfers to add</span><strong id="preview-repeat-count">1</strong></div>
-                            <div><span>This repeated set</span><strong id="preview-amount">₹0.00</strong></div>
+                            <div><span>Amount for this set</span><strong id="preview-amount">₹0.00</strong></div>
                             <div><span>Total after adding</span><strong id="preview-total">₹0.00</strong></div>
                         </section>
 
@@ -150,7 +150,7 @@
                     <div id="transfer-queue" class="transfer-queue" aria-live="polite">
                         <div class="history-empty">
                             <strong>Your queue is empty</strong>
-                            <span>You may add as many destinations and timestamps as required.</span>
+                            <span>You can add as many destinations and times as you need.</span>
                         </div>
                     </div>
 
