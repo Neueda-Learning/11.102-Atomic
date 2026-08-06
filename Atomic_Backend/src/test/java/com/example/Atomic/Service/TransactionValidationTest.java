@@ -24,11 +24,14 @@ class TransactionValidationTest {
     @Mock
     private TransactionProcessing transactionProcessing;
 
+    @Mock
+    private AlertProcessing alertProcessing;
+
     @InjectMocks
     private TransactionValidation transactionValidation;
 
     @Test
-    void validateTransaction_fails_whenAmountIsZeroOrNegative() {
+    void validateTransaction_fails_whenAmountIsZeroOrNegative() throws InterruptedException {
         Transactions transaction = new Transactions(101L, 202L, 0.0, Instant.now(), 1);
 
         String result = transactionValidation.validateTransaction(transaction);
@@ -40,7 +43,7 @@ class TransactionValidationTest {
     }
 
     @Test
-    void validateTransaction_fails_whenAccountNumbersAreNonPositive() {
+    void validateTransaction_fails_whenAccountNumbersAreNonPositive() throws InterruptedException {
         Transactions transaction = new Transactions(0L, 202L, 100.0, Instant.now(), 1);
 
         String result = transactionValidation.validateTransaction(transaction);
@@ -52,7 +55,7 @@ class TransactionValidationTest {
     }
 
     @Test
-    void validateTransaction_fails_whenDebitAndCreditAreSame() {
+    void validateTransaction_fails_whenDebitAndCreditAreSame() throws InterruptedException {
         Transactions transaction = new Transactions(555L, 555L, 100.0, Instant.now(), 1);
 
         String result = transactionValidation.validateTransaction(transaction);
@@ -64,7 +67,7 @@ class TransactionValidationTest {
     }
 
     @Test
-    void validateTransaction_marksValidatedAndCallsProcessing_whenInputIsValid() {
+    void validateTransaction_marksValidatedAndCallsProcessing_whenInputIsValid() throws InterruptedException {
         Transactions transaction = new Transactions(101L, 202L, 250.0, Instant.now(), 1);
         when(transactionProcessing.processTransaction(transaction))
                 .thenReturn("Transaction processed successfully!");
@@ -75,6 +78,6 @@ class TransactionValidationTest {
         assertEquals(2, transaction.getStatus());
         verify(transactionsRepo).save(transaction);
         verify(transactionProcessing).processTransaction(transaction);
+        verify(alertProcessing).generateAlert6(101L, 0);
     }
 }
-

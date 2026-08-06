@@ -1,8 +1,10 @@
 package com.example.Atomic.Controller;
 
+import com.example.Atomic.Model.Alert;
 import com.example.Atomic.Model.Rules;
 import com.example.Atomic.Model.Transactions;
 import com.example.Atomic.Model.User;
+import com.example.Atomic.Service.AlertProcessing;
 import com.example.Atomic.Service.RulesProcessing;
 import com.example.Atomic.Service.TransactionCreation;
 import com.example.Atomic.Service.UserService;
@@ -21,6 +23,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -45,6 +48,9 @@ class SuperControllerTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private AlertProcessing alertProcessing;
 
     @InjectMocks
     private SuperController superController;
@@ -149,6 +155,34 @@ class SuperControllerTest {
         mockMvc.perform(post("/home/alert/update"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Alert status updated successfully!"));
+    }
+
+    @Test
+    void getAlerts_returnsAlertsForRequestedAccount() throws Exception {
+        Alert alert = new Alert(101L, 4L, 1, Instant.parse("2026-08-06T10:00:00Z"), null);
+        when(alertProcessing.getAllAlerts(101L)).thenReturn(List.of(alert));
+
+        mockMvc.perform(get("/home/rules/alerts").param("accountId", "101"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].accountNumber").value(101))
+                .andExpect(jsonPath("$[0].status").value(1));
+
+        verify(alertProcessing).getAllAlerts(101L);
+    }
+
+    @Test
+    void acknowledgeAlert_usesExistingDoubleHomeRoute() throws Exception {
+        when(alertProcessing.acknowledgeAlert(any(Alert.class)))
+                .thenReturn("Alert Acknowledged!");
+
+        mockMvc.perform(get("/home/home/alerts/acknowledge")
+                        .param("accountNumber", "101")
+                        .param("alert_id", "4")
+                        .param("status", "1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Alert Acknowledged!"));
+
+        verify(alertProcessing).acknowledgeAlert(any(Alert.class));
     }
 
     // ── GET /home/rules ───────────────────────────────────────────────────────
@@ -257,7 +291,6 @@ class SuperControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
 
 
 

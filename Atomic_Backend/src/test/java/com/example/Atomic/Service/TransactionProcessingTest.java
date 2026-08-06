@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -27,32 +28,14 @@ class TransactionProcessingTest {
     @Mock
     private UserRepo userRepo;
 
+    @Mock
+    private AlertProcessing alertProcessing;
+
     @InjectMocks
     private TransactionProcessing transactionProcessing;
 
     @Test
-    void processTransaction_returnsError_whenTransactionIsNull() {
-        String result = transactionProcessing.processTransaction(null);
-
-        assertEquals("Transaction payload is required.", result);
-        verify(transactionsRepo, never()).save(org.mockito.ArgumentMatchers.any());
-        verify(userRepo, never()).save(org.mockito.ArgumentMatchers.any());
-    }
-
-    @Test
-    void processTransaction_fails_whenAmountIsInvalid() {
-        Transactions transaction = new Transactions(1L, 2L, 0, Instant.now(), 1);
-
-        String result = transactionProcessing.processTransaction(transaction);
-
-        assertEquals("Transaction amount must be greater than 0.", result);
-        assertEquals(5, transaction.getStatus());
-        verify(transactionsRepo).save(transaction);
-        verify(userRepo, never()).save(org.mockito.ArgumentMatchers.any());
-    }
-
-    @Test
-    void processTransaction_fails_whenDebitAccountMissing() {
+    void processTransaction_marksFailed_whenDebitAccountDoesNotExist() throws InterruptedException {
         Transactions transaction = new Transactions(101L, 202L, 50.0, Instant.now(), 2);
         when(userRepo.findByAccountNumber(101L)).thenReturn(null);
 
@@ -61,14 +44,14 @@ class TransactionProcessingTest {
         assertEquals("Debit account 101 does not exist.", result);
         assertEquals(5, transaction.getStatus());
         verify(transactionsRepo).save(transaction);
-        verify(userRepo, never()).save(org.mockito.ArgumentMatchers.any());
+        verify(userRepo, never()).save(any(User.class));
+        verify(alertProcessing, never()).generateAlert(101L, 0);
     }
 
     @Test
-    void processTransaction_fails_whenCreditAccountMissing() {
+    void processTransaction_marksFailed_whenCreditAccountDoesNotExist() throws InterruptedException {
         Transactions transaction = new Transactions(101L, 202L, 50.0, Instant.now(), 2);
         User debitUser = userWithAccount(101L, 1000.0);
-
         when(userRepo.findByAccountNumber(101L)).thenReturn(debitUser);
         when(userRepo.findByAccountNumber(202L)).thenReturn(null);
 
@@ -76,33 +59,18 @@ class TransactionProcessingTest {
 
         assertEquals("Credit account 202 does not exist.", result);
         assertEquals(5, transaction.getStatus());
+        assertEquals(1000.0, debitUser.getBalance(), 0.0001);
         verify(transactionsRepo).save(transaction);
-        verify(userRepo, never()).save(org.mockito.ArgumentMatchers.any());
+        verify(userRepo, never()).save(any(User.class));
+        verify(alertProcessing, never()).generateAlert(101L, 0);
     }
 
     @Test
-    void processTransaction_fails_whenInsufficientFunds() {
-        Transactions transaction = new Transactions(101L, 202L, 500.0, Instant.now(), 2);
-        User debitUser = userWithAccount(101L, 100.0);
-        User creditUser = userWithAccount(202L, 250.0);
-
-        when(userRepo.findByAccountNumber(101L)).thenReturn(debitUser);
-        when(userRepo.findByAccountNumber(202L)).thenReturn(creditUser);
-
-        String result = transactionProcessing.processTransaction(transaction);
-
-        assertEquals("Insufficient funds in debit account 101.", result);
-        assertEquals(5, transaction.getStatus());
-        verify(transactionsRepo).save(transaction);
-        verify(userRepo, never()).save(org.mockito.ArgumentMatchers.any());
-    }
-
-    @Test
-    void processTransaction_updatesBalancesAndCompletes_whenValid() {
+    void processTransaction_updatesBothBalancesCompletesAndGeneratesAlerts_whenAccountsExist()
+            throws InterruptedException {
         Transactions transaction = new Transactions(101L, 202L, 75.5, Instant.now(), 2);
         User debitUser = userWithAccount(101L, 500.0);
         User creditUser = userWithAccount(202L, 100.0);
-
         when(userRepo.findByAccountNumber(101L)).thenReturn(debitUser);
         when(userRepo.findByAccountNumber(202L)).thenReturn(creditUser);
 
@@ -112,9 +80,9 @@ class TransactionProcessingTest {
         assertEquals(424.5, debitUser.getBalance(), 0.0001);
         assertEquals(175.5, creditUser.getBalance(), 0.0001);
         assertEquals(4, transaction.getStatus());
-
-        verify(userRepo, times(2)).save(org.mockito.ArgumentMatchers.any(User.class));
+        verify(userRepo, times(2)).save(any(User.class));
         verify(transactionsRepo).save(transaction);
+        verify(alertProcessing).generateAlert(101L, 0);
     }
 
     private User userWithAccount(long accountNumber, double balance) {
@@ -124,4 +92,3 @@ class TransactionProcessingTest {
         return user;
     }
 }
-

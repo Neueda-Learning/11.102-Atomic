@@ -15,6 +15,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,7 +33,7 @@ class TransactionCreationTest {
     private TransactionCreation transactionCreation;
 
     @Test
-    void submitTransaction_savesThenValidatesAndReturnsCreatedMessage() {
+    void submitTransaction_savesThenValidatesAndReturnsCreatedMessage() throws InterruptedException {
         doAnswer((invocation) -> {
             Transactions saved = invocation.getArgument(0);
             saved.setTransID(123L);
@@ -113,5 +114,55 @@ class TransactionCreationTest {
         assertSame(expected, actual);
         verify(transactionsRepo).findAllByAmountBetween(50.0, 100.0);
     }
-}
 
+    @Test
+    void scheduleTransaction_truncatesToMinuteAndSetsCreatedForFutureTime() throws InterruptedException {
+        Instant requested = Instant.now().plusSeconds(600).plusMillis(321);
+        when(transactionsRepo.save(any(Transactions.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Transactions result = transactionCreation.scheduleTransaction(11L, 22L, 75.0, requested);
+
+        assertEquals(1, result.getStatus());
+        assertEquals(59, result.getTimeDate().getEpochSecond() % 60);
+        assertEquals(0, result.getTimeDate().getNano());
+        verify(transactionsRepo).save(result);
+        verify(transactionValidation, org.mockito.Mockito.never())
+                .validateTransaction(any(Transactions.class));
+    }
+
+    @Test
+    void scheduleTransaction_marksPastTimeFailedWithoutValidation() throws InterruptedException {
+        when(transactionsRepo.save(any(Transactions.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Transactions result = transactionCreation.scheduleTransaction(
+                11L,
+                22L,
+                75.0,
+                Instant.now().minusSeconds(60)
+        );
+
+        assertEquals(5, result.getStatus());
+        verify(transactionValidation, org.mockito.Mockito.never())
+                .validateTransaction(any(Transactions.class));
+    }
+
+    @Test
+    void processDueTransactions_validatesEveryDueTransaction() throws InterruptedException {
+        Transactions first = new Transactions(1L, 2L, 10.0, Instant.now(), 1);
+        Transactions second = new Transactions(1L, 3L, 20.0, Instant.now(), 1);
+        when(transactionsRepo.findDueTransactions(any(Instant.class)))
+                .thenReturn(List.of(first, second));
+        doAnswer(invocation -> {
+            Transactions transaction = invocation.getArgument(0);
+            transaction.setStatus(4);
+            return "Transaction is valid.";
+        }).when(transactionValidation).validateTransaction(any(Transactions.class));
+
+        transactionCreation.processDueTransactions();
+
+        verify(transactionValidation).validateTransaction(first);
+        verify(transactionValidation).validateTransaction(second);
+    }
+}
