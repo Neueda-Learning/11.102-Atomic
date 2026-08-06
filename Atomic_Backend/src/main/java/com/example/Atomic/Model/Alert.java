@@ -9,7 +9,7 @@ import java.time.Instant;
 @Component
 @Entity
 public class Alert {
-    // Alert ID, Severity, Status --> Opened, Acknowledged, etc; Alert Time, Resolution Time
+    // Alert ID, Status --> Opened, Acknowledged, Closed, etc; Alert Time, Resolution Time
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "alert_gen_id")
@@ -20,7 +20,7 @@ public class Alert {
     private long alertID;
     //@Column(name = "severity")
     //private int severity;
-    @Column(name = "status")
+    @Column(name = "status") // 1 -> opened; 2 -> acknowledged; 3 -> closed;
     private int status;
     @Column(name = "alert_time")
     private Instant alertTime;
@@ -43,6 +43,14 @@ public class Alert {
 
     public long getAlert_id() {
         return alertID;
+    }
+
+    public long getAccountNumber() {
+        return accountNumber;
+    }
+
+    public void setAccountNumber(long accountNumber) {
+        this.accountNumber = accountNumber;
     }
 
     public void setAlert_id(long alert_id) {

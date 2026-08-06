@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Submit an Atomic transfer">
-    <title>New transfer | Atomic</title>
+    <meta name="description" content="Create one or many Atomic transfers">
+    <title>New transfers | Atomic</title>
     <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
@@ -43,9 +43,9 @@
 <main class="shell">
     <header class="page-heading">
         <div>
-            <p class="eyebrow">Payment initiation</p>
-            <h1>Create a transfer.</h1>
-            <p>Your debit account is read from the login session and is never accepted from the submitted form.</p>
+            <p class="eyebrow">Multi-transfer setup</p>
+            <h1>Create one or many transfers.</h1>
+            <p>Add any number of destinations and processing times. The frontend submits every queued transfer through its own backend request.</p>
         </div>
         <span class="session-pill">Debit account secured</span>
     </header>
@@ -57,49 +57,115 @@
             <dl>
                 <div><dt>Debit account</dt><dd data-account-mask>—</dd></div>
                 <div><dt>Available balance</dt><dd data-wallet-balance>₹0.00</dd></div>
+                <div><dt>Transfers queued</dt><dd id="queued-count">0</dd></div>
+                <div><dt>Queued total</dt><dd id="queued-total">₹0.00</dd></div>
             </dl>
+            <p class="account-card__note">There is no fixed frontend limit. Add another destination after every entry.</p>
         </aside>
 
-        <section class="panel" aria-labelledby="transfer-heading">
-            <div class="panel__head">
-                <h2 id="transfer-heading">Transfer details</h2>
-                <p>Provide only the destination account and amount.</p>
-            </div>
-            <div class="panel__body">
-                <form class="form" id="transaction-form">
-                    <div class="field">
-                        <label for="debit-account">Debit account (from session)</label>
-                        <input id="debit-account" type="text" readonly tabindex="-1">
+        <div class="transfer-workspace">
+            <section class="panel" aria-labelledby="transfer-heading">
+                <div class="panel__head">
+                    <h2 id="transfer-heading">Add a transfer</h2>
+                    <p>Choose one destination, amount and processing minute, then add it to the queue.</p>
+                </div>
+                <div class="panel__body">
+                    <form class="form" id="transaction-form">
+                        <div class="field">
+                            <label for="debit-account">Debit account (from session)</label>
+                            <input id="debit-account" type="text" readonly tabindex="-1">
+                        </div>
+
+                        <div class="field">
+                            <label for="credit-account">Credit account number</label>
+                            <!-- Fixed 16-digit validation intentionally disabled. -->
+                            <input id="credit-account" type="text" inputmode="numeric"
+                                   pattern="[0-9]+" placeholder="Destination account" required>
+                            <p class="field-note">Digits only. It must differ from your debit account.</p>
+                            <p class="field-note field-note--live" id="credit-feedback" aria-live="polite"></p>
+                        </div>
+
+                        <div class="field">
+                            <label for="amount">Amount (INR)</label>
+                            <input id="amount" type="number" min="0.01" step="0.01"
+                                   placeholder="0.00" required>
+                            <p class="field-note field-note--live" id="amount-feedback" aria-live="polite"></p>
+                        </div>
+
+                        <div class="field">
+                            <label for="repeat-count">Number of repetitions</label>
+                            <input id="repeat-count" type="number" min="1" step="1" value="1" required>
+                            <p class="field-note">Each repetition becomes a separate transaction and API request.</p>
+                            <p class="field-note field-note--live" id="repeat-feedback" aria-live="polite"></p>
+                        </div>
+
+                        <fieldset class="timing-options">
+                            <legend>Processing time</legend>
+                            <div class="timing-options__grid">
+                                <label class="timing-option">
+                                    <input type="radio" name="processing-mode" value="immediate" checked>
+                                    <span>
+                                        <strong>Process now</strong>
+                                        <small>Use the existing immediate submission endpoint.</small>
+                                    </span>
+                                </label>
+                                <label class="timing-option">
+                                    <input type="radio" name="processing-mode" value="scheduled">
+                                    <span>
+                                        <strong>Schedule for later</strong>
+                                        <small>Store it at status 1 until the selected minute.</small>
+                                    </span>
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <div class="field schedule-field" id="schedule-field" hidden>
+                            <label for="processing-time">Scheduled date and time</label>
+                            <input id="processing-time" type="datetime-local" step="60">
+                            <p class="field-note">Choose the local date, hour and minute. The backend changes the seconds to :59.</p>
+                            <p class="field-note field-note--live" id="processing-time-feedback" aria-live="polite"></p>
+                        </div>
+
+                        <section class="transfer-preview" aria-live="polite">
+                            <div><span>Transfers to add</span><strong id="preview-repeat-count">1</strong></div>
+                            <div><span>This repeated set</span><strong id="preview-amount">₹0.00</strong></div>
+                            <div><span>Total after adding</span><strong id="preview-total">₹0.00</strong></div>
+                        </section>
+
+                        <button class="button button--primary" id="add-transaction" type="submit">Add to transfer queue</button>
+                        <p class="form-message" id="transaction-message" aria-live="polite"></p>
+                    </form>
+                </div>
+            </section>
+
+            <section class="panel transfer-queue-panel" aria-labelledby="queue-heading">
+                <div class="panel__head transfer-queue-panel__head">
+                    <div>
+                        <h2 id="queue-heading">Transfer queue</h2>
+                        <p id="queue-summary">Add your first transfer above.</p>
                     </div>
-                    <div class="field">
-                        <label for="credit-account">Credit account number</label>
-                        <!-- Fixed 16-digit validation disabled:
-                             pattern="[0-9]{16}" minlength="16" maxlength="16" -->
-                        <input id="credit-account" type="text" inputmode="numeric"
-                               pattern="[0-9]+"
-                               placeholder="2000000000000002" required>
-                        <p class="field-note">Enter the destination account number using digits only.</p>
-                        <p class="field-note field-note--live" id="credit-feedback" aria-live="polite"></p>
+                    <span class="queue-count" id="queue-count">0</span>
+                </div>
+                <div class="panel__body">
+                    <div id="transfer-queue" class="transfer-queue" aria-live="polite">
+                        <div class="history-empty">
+                            <strong>Your queue is empty</strong>
+                            <span>You may add as many destinations and timestamps as required.</span>
+                        </div>
                     </div>
-                    <div class="field">
-                        <label for="amount">Amount (INR)</label>
-                        <input id="amount" type="number" min="0.01" step="0.01"
-                               placeholder="0.00" required>
-                        <p class="field-note field-note--live" id="amount-feedback" aria-live="polite"></p>
+
+                    <div class="queue-actions">
+                        <button class="button button--ghost" id="clear-queue" type="button" disabled>Clear queue</button>
+                        <button class="button button--primary" id="submit-queue" type="button" disabled>Submit queued transfers</button>
                     </div>
-                    <section class="transfer-preview" id="transfer-preview" aria-live="polite">
-                        <div><span>You send</span><strong id="preview-amount">INR 0.00</strong></div>
-                        <div><span>Projected balance</span><strong id="preview-balance">INR 0.00</strong></div>
-                    </section>
-                    <button class="button button--primary" id="submit-transaction" type="submit">Submit transfer</button>
-                    <p class="form-message" id="transaction-message" aria-live="polite"></p>
-                </form>
-            </div>
-        </section>
+                    <p class="form-message" id="queue-message" aria-live="polite"></p>
+                </div>
+            </section>
+        </div>
     </div>
 </main>
 
-<footer class="footer">Atomic · Transfer initiation</footer>
+<footer class="footer">Atomic · Multi-transfer initiation</footer>
 <script src="/js/api.js"></script>
 <script src="/js/transaction.js"></script>
 </body>

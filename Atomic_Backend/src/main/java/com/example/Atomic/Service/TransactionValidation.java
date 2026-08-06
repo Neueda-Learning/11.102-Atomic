@@ -11,6 +11,8 @@ public class TransactionValidation {
     TransactionsRepo trans;
     @Autowired
     TransactionProcessing transProcessing;
+    @Autowired
+    AlertProcessing alertProcessing;
     public String validateTransaction(Transactions transaction) {
         // 0 < amount <= wallet balance, credit and debit account numbers should be 16 digits each
         // and they must not be equal
@@ -35,6 +37,7 @@ public class TransactionValidation {
         transaction.setStatus(2);
         trans.save(transaction);
         transProcessing.processTransaction(transaction);
+        alertProcessing.generateAlert6(transaction.getDebitAccountNumber(), 0);
         return "Transaction is valid.";
     }
 }

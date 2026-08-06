@@ -4,8 +4,11 @@
     const USER_KEY = "atomic.v2.user";
     const REQUEST_KEY = "atomic.v2.pending-request";
     const TRANSACTION_KEY = "atomic.v2.transaction";
+    const BATCH_KEY = "atomic.v3.transaction-batch";
     const BALANCE_APPLIED_KEY = "atomic.v2.balance-applied";
+    const ALERT_OVERRIDES_KEY = "atomic.v4.alert-status-overrides";
     const THEME_KEY = "atomic.v2.theme";
+    const COLOUR_MODE_KEY = "atomic.v3.colour-mode";
 
     function getStoredTheme() {
         try {
@@ -53,6 +56,53 @@
         applyTheme(current === "dark" ? "light" : "dark");
     }
 
+    function getStoredColourMode() {
+        try {
+            return localStorage.getItem(COLOUR_MODE_KEY) === "accessible"
+                ? "accessible"
+                : "standard";
+        } catch (error) {
+            return "standard";
+        }
+    }
+
+    function updateColourToggleLabels(mode) {
+        const accessible = mode === "accessible";
+        document.querySelectorAll("[data-colour-toggle]").forEach((button) => {
+            button.setAttribute("aria-pressed", String(accessible));
+            button.textContent = accessible
+                ? "Colour: Accessible"
+                : "Colour: Standard";
+            button.setAttribute("aria-label", accessible
+                ? "Switch off colour-blind mode"
+                : "Switch on colour-blind mode");
+        });
+    }
+
+    function applyColourMode(mode, persist = true) {
+        const safeMode = mode === "accessible" ? "accessible" : "standard";
+        document.documentElement.setAttribute("data-colour-mode", safeMode);
+
+        if (persist) {
+            try {
+                localStorage.setItem(COLOUR_MODE_KEY, safeMode);
+            } catch (error) {
+                // Ignore storage limits and privacy mode restrictions.
+            }
+        }
+
+        updateColourToggleLabels(safeMode);
+        document.dispatchEvent(new CustomEvent("atomic:colour-mode-change", {
+            detail: { mode: safeMode }
+        }));
+    }
+
+    function toggleColourMode() {
+        const current = document.documentElement.getAttribute("data-colour-mode")
+            || "standard";
+        applyColourMode(current === "accessible" ? "standard" : "accessible");
+    }
+
     function mountThemeToggle() {
         if (document.querySelector("[data-theme-toggle]")) {
             return;
@@ -79,10 +129,41 @@
         document.body.appendChild(button);
     }
 
+    function mountColourToggle() {
+        if (document.querySelector("[data-colour-toggle]")) {
+            return;
+        }
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.colourToggle = "true";
+        button.className = "theme-toggle";
+        button.addEventListener("click", toggleColourMode);
+
+        const nav = document.querySelector(".nav");
+        if (nav) {
+            if (nav.querySelector(".nav-action")) {
+                button.classList.add("nav-action");
+            } else if (nav.querySelector(".link-button")) {
+                button.classList.add("link-button");
+            }
+            nav.appendChild(button);
+            return;
+        }
+
+        button.classList.add("theme-toggle--floating", "colour-toggle--floating");
+        document.body.appendChild(button);
+    }
+
     function initTheme() {
         applyTheme(resolveTheme(), false);
+        applyColourMode(getStoredColourMode(), false);
         mountThemeToggle();
+        mountColourToggle();
         updateThemeToggleLabels(document.documentElement.getAttribute("data-theme") || "light");
+        updateColourToggleLabels(
+            document.documentElement.getAttribute("data-colour-mode") || "standard"
+        );
     }
 
     function parseApiText(text) {
@@ -97,7 +178,7 @@
         // The existing backend serializes account numbers as JSON numbers. Quoting
         // these fields before JSON.parse prevents precision loss for 16-digit longs.
         const precisionSafeText = trimmed.replace(
-            /("(?:accountNumber|debitAccountNumber|creditAccountNumber)"\s*:\s*)(-?\d+)/g,
+            /("(?:accountNumber|account_number|debitAccountNumber|creditAccountNumber)"\s*:\s*)(-?\d+)/g,
             "$1\"$2\""
         );
 
@@ -187,9 +268,29 @@
         return raw ? JSON.parse(raw) : null;
     }
 
+    function setPendingBatch(batch) {
+        sessionStorage.setItem(BATCH_KEY, JSON.stringify(batch));
+    }
+
+    function getPendingBatch() {
+        const raw = sessionStorage.getItem(BATCH_KEY);
+        if (!raw) {
+            return [];
+        }
+
+        try {
+            const batch = JSON.parse(raw);
+            return Array.isArray(batch) ? batch : [];
+        } catch (error) {
+            sessionStorage.removeItem(BATCH_KEY);
+            return [];
+        }
+    }
+
     function clearTransactionState() {
         sessionStorage.removeItem(REQUEST_KEY);
         sessionStorage.removeItem(TRANSACTION_KEY);
+        sessionStorage.removeItem(BATCH_KEY);
     }
 
     async function logout() {
@@ -198,6 +299,7 @@
         } finally {
             sessionStorage.removeItem(USER_KEY);
             sessionStorage.removeItem(BALANCE_APPLIED_KEY);
+            sessionStorage.removeItem(ALERT_OVERRIDES_KEY);
             clearTransactionState();
             location.replace("/");
         }
@@ -363,14 +465,182 @@
         return Array.isArray(result) ? result : [];
     }
 
+    async function fetchTransactionsForCredit(accountNumber) {
+        const params = new URLSearchParams({
+            credit_account_number: String(accountNumber)
+        });
+        const result = await request(`/home/transaction/fetch/credit?${params}`);
+        return Array.isArray(result) ? result : [];
+    }
+
+    function alertStatusInfo(status) {
+        const statuses = {
+            1: { label: "Opened", className: "danger" },
+            2: { label: "Acknowledged", className: "warning" },
+            3: { label: "Closed", className: "success" }
+        };
+        return statuses[Number(status)] ?? {
+            label: `Status ${status}`,
+            className: "info"
+        };
+    }
+
+    function alertKey(alert) {
+        const generatedId = alert?.alertGenId;
+        if (generatedId !== null && generatedId !== undefined && generatedId !== "") {
+            return `id:${generatedId}`;
+        }
+
+        return [
+            `account:${String(alert?.accountNumber ?? "")}`,
+            `rule:${String(alert?.ruleId ?? "")}`,
+            `time:${String(alert?.alertTime ?? "")}`
+        ].join("|");
+    }
+
+    function readAlertOverrides() {
+        try {
+            const stored = JSON.parse(sessionStorage.getItem(ALERT_OVERRIDES_KEY) || "{}");
+            return stored && typeof stored === "object" ? stored : {};
+        } catch (error) {
+            sessionStorage.removeItem(ALERT_OVERRIDES_KEY);
+            return {};
+        }
+    }
+
+    function writeAlertOverride(alert, status, resolutionTime = null) {
+        const overrides = readAlertOverrides();
+        const key = alertKey(alert);
+        overrides[key] = {
+            status: Number(status),
+            resolutionTime: resolutionTime ?? alert.resolutionTime ?? null
+        };
+        sessionStorage.setItem(ALERT_OVERRIDES_KEY, JSON.stringify(overrides));
+
+        return {
+            ...alert,
+            status: Number(status),
+            resolutionTime: overrides[key].resolutionTime
+        };
+    }
+
+    function normaliseAlert(rawAlert, requestedAccountNumber) {
+        const alert = {
+            alertGenId: rawAlert.alertGenID
+                ?? rawAlert.alertGenId
+                ?? rawAlert.alert_gen_id
+                ?? rawAlert.id
+                ?? null,
+            accountNumber: String(rawAlert.accountNumber
+                ?? rawAlert.account_number
+                ?? requestedAccountNumber
+                ?? ""),
+            ruleId: rawAlert.alertID
+                ?? rawAlert.alertId
+                ?? rawAlert.alert_id
+                ?? rawAlert.ruleId
+                ?? null,
+            status: Number(rawAlert.status ?? 1),
+            alertTime: rawAlert.alertTime ?? rawAlert.alert_time ?? null,
+            resolutionTime: rawAlert.resolutionTime ?? rawAlert.resolution_time ?? null
+        };
+
+        const override = readAlertOverrides()[alertKey(alert)];
+        return override
+            ? {
+                ...alert,
+                status: Number(override.status),
+                resolutionTime: override.resolutionTime ?? alert.resolutionTime
+            }
+            : alert;
+    }
+
+    async function fetchAlerts(accountNumber) {
+        const params = new URLSearchParams({ accountId: String(accountNumber) });
+        const result = await request(`/home/rules/alerts?${params}`);
+        return Array.isArray(result)
+            ? result.map((alert) => normaliseAlert(alert, accountNumber))
+            : [];
+    }
+
+    async function fetchAlertsByStatus(accountNumber, status) {
+        const params = new URLSearchParams({
+            accountId: String(accountNumber),
+            status: String(status)
+        });
+        const result = await request(`/home/home/alerts/status?${params}`);
+        return Array.isArray(result)
+            ? result.map((alert) => normaliseAlert(alert, accountNumber))
+            : [];
+    }
+
+    async function fetchAlertRules() {
+        const result = await request("/home/rules");
+        return Array.isArray(result) ? result : [];
+    }
+
+    function alertUpdateParams(alert) {
+        const params = new URLSearchParams({
+            alert_id: String(alert.ruleId ?? ""),
+            status: String(alert.status ?? 1)
+        });
+
+        if (alert.alertTime) {
+            params.set("alert_time", alert.alertTime);
+        }
+        if (alert.resolutionTime) {
+            params.set("resolution_time", alert.resolutionTime);
+        }
+        return params;
+    }
+
+    async function acknowledgeAlert(alert) {
+        const params = alertUpdateParams(alert);
+        await request(`/home/home/alerts/acknowledge?${params}`);
+        return writeAlertOverride(alert, 2);
+    }
+
+    async function closeAlert(alert) {
+        const resolutionTime = new Date().toISOString();
+        const closingAlert = writeAlertOverride(alert, 3, resolutionTime);
+        const params = alertUpdateParams(closingAlert);
+        await request(`/home/home/alerts/close?${params}`);
+        return closingAlert;
+    }
+
+    function closeAlertKeepalive(alert) {
+        const resolutionTime = new Date().toISOString();
+        const closingAlert = writeAlertOverride(alert, 3, resolutionTime);
+        const params = alertUpdateParams(closingAlert);
+
+        void fetch(`/home/home/alerts/close?${params}`, {
+            method: "GET",
+            credentials: "same-origin",
+            keepalive: true
+        });
+
+        return closingAlert;
+    }
+
     window.AtomicApi = {
+        acknowledgeAlert,
+        alertKey,
+        alertStatusInfo,
         applyCompletedDebitToUser,
+        applyColourMode,
         applyTheme,
         bindLogout,
         clearTransactionState,
+        closeAlert,
+        closeAlertKeepalive,
+        fetchAlertRules,
+        fetchAlerts,
+        fetchAlertsByStatus,
+        fetchTransactionsForCredit,
         fetchTransactionsForDebit,
         findSubmittedTransaction,
         formatMoney,
+        getPendingBatch,
         getPendingRequest,
         getTransaction,
         getUser,
@@ -380,11 +650,13 @@
         request,
         requireUser,
         setButtonLoading,
+        setPendingBatch,
         setPendingRequest,
         initTheme,
         setTransaction,
         setUser,
         statusInfo,
+        toggleColourMode,
         toggleTheme,
         transactionId
     };

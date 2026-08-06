@@ -2,24 +2,43 @@
     "use strict";
 
     let user = AtomicApi.requireUser();
-    const pendingRequest = AtomicApi.getPendingRequest();
-    let transaction = AtomicApi.getTransaction();
     const resultType = document.body.dataset.result;
+    let batch = AtomicApi.getPendingBatch();
     let feedbackTimer;
 
     if (!user) {
         return;
     }
-    if (!pendingRequest || !transaction) {
+
+    // Preserve compatibility with receipts created by the older single-transfer page.
+    if (!batch.length) {
+        const pendingRequest = AtomicApi.getPendingRequest();
+        const transaction = AtomicApi.getTransaction();
+
+        if (pendingRequest && transaction) {
+            batch = [{
+                ...pendingRequest,
+                transaction,
+                transactionId: AtomicApi.transactionId(transaction),
+                status: Number(transaction.status)
+            }];
+        }
+    }
+
+    if (!batch.length) {
         location.replace("/transaction.html");
         return;
     }
 
+    function isTerminal(item) {
+        return Number(item.status) === 4 || Number(item.status) === 5;
+    }
+
     function statusClass(status) {
-        if (status === 5) {
+        if (Number(status) === 5) {
             return "badge badge--failed";
         }
-        if (status === 4) {
+        if (Number(status) === 4) {
             return "badge badge--completed";
         }
         return "badge badge--sent";
@@ -32,112 +51,190 @@
         }
 
         feedback.textContent = message;
-        clearTimeout(feedbackTimer);
-        feedbackTimer = setTimeout(function () {
+        window.clearTimeout(feedbackTimer);
+        feedbackTimer = window.setTimeout(() => {
             feedback.textContent = "";
         }, 2200);
     }
 
+    function referenceText() {
+        const references = batch
+            .map((item) => item.transactionId)
+            .filter(Boolean)
+            .map((id) => `#${id}`);
+
+        return references.length
+            ? references.join(", ")
+            : "No backend references were returned";
+    }
+
     async function copyReference() {
-        const value = `#${AtomicApi.transactionId(transaction)}`;
+        const value = referenceText();
 
         try {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
+            if (navigator.clipboard?.writeText) {
                 await navigator.clipboard.writeText(value);
-                showFeedback("Reference copied.");
+                showFeedback(batch.length > 1
+                    ? "References copied."
+                    : "Reference copied.");
                 return;
             }
         } catch (error) {
-            // Fallback below handles blocked clipboard permissions.
+            // Use the fallback below when clipboard permission is unavailable.
         }
 
-        const fallbackInput = document.createElement("input");
-        fallbackInput.value = value;
-        document.body.appendChild(fallbackInput);
-        fallbackInput.select();
+        const input = document.createElement("input");
+        input.value = value;
+        document.body.appendChild(input);
+        input.select();
         document.execCommand("copy");
-        fallbackInput.remove();
-        showFeedback("Reference copied.");
+        input.remove();
+        showFeedback("References copied.");
     }
 
     function bindUtilityActions() {
-        const copyButton = document.querySelector("#copy-reference");
-        if (copyButton) {
-            copyButton.addEventListener("click", function () {
-                copyReference().catch(function () {
-                    showFeedback("Unable to copy right now.");
-                });
-            });
-        }
+        document.querySelector("#copy-reference")?.addEventListener("click", () => {
+            copyReference().catch(() => showFeedback("Unable to copy right now."));
+        });
 
-        const printButton = document.querySelector("#print-receipt");
-        if (printButton) {
-            printButton.addEventListener("click", function () {
-                window.print();
-            });
-        }
+        document.querySelector("#print-receipt")?.addEventListener("click", () => {
+            window.print();
+        });
     }
 
-    function render() {
+    function renderSingle(item) {
+        const transaction = item.transaction || {
+            transID: item.transactionId,
+            debitAccountNumber: item.debitAccountNumber,
+            creditAccountNumber: item.creditAccountNumber,
+            amount: item.amount,
+            status: item.status
+        };
         const info = AtomicApi.statusInfo(transaction.status);
-        document.querySelector("#result-id").textContent = `#${AtomicApi.transactionId(transaction)}`;
-        document.querySelector("#result-amount").textContent = AtomicApi.formatMoney(transaction.amount);
-        document.querySelector("#result-debit").textContent = AtomicApi.maskAccount(transaction.debitAccountNumber);
-        document.querySelector("#result-credit").textContent = AtomicApi.maskAccount(transaction.creditAccountNumber);
+
+        document.querySelector("#result-id").textContent = item.transactionId
+            ? `#${item.transactionId}`
+            : "Unavailable";
+        document.querySelector("#result-amount").textContent =
+            AtomicApi.formatMoney(transaction.amount);
+        document.querySelector("#result-debit").textContent =
+            AtomicApi.maskAccount(transaction.debitAccountNumber);
+        document.querySelector("#result-credit").textContent =
+            AtomicApi.maskAccount(transaction.creditAccountNumber);
+
         const statusElement = document.querySelector("#result-status");
         statusElement.textContent = info.label;
-        statusElement.className = statusClass(Number(transaction.status));
+        statusElement.className = statusClass(transaction.status);
 
         const balanceElement = document.querySelector("#result-balance");
         if (balanceElement) {
             balanceElement.textContent = AtomicApi.formatMoney(user.balance);
-            balanceElement.title = "Current session balance after completed transfers";
         }
     }
 
-    async function verifyTerminalStatus() {
+    function renderBatch() {
+        document.querySelector("#single-result").hidden = true;
+        document.querySelector("#batch-result").hidden = false;
+
+        const completed = batch.filter((item) => Number(item.status) === 4).length;
+        const failed = batch.filter((item) => Number(item.status) === 5).length;
+
+        document.querySelector("#batch-result-summary").textContent =
+            `${completed} completed · ${failed} failed · ${batch.length} total`;
+
+        document.querySelector("#batch-result-list").innerHTML = batch.map((item, index) => {
+            const info = AtomicApi.statusInfo(item.status);
+            const reference = item.transactionId
+                ? `#${item.transactionId}`
+                : `Transfer ${index + 1}`;
+
+            return `
+                <div class="batch-result-row">
+                    <div>
+                        <strong>${reference} · ${AtomicApi.maskAccount(item.creditAccountNumber)}</strong>
+                        <span>${AtomicApi.formatMoney(item.amount)}</span>
+                    </div>
+                    <span class="badge badge--${info.className}">${info.label}</span>
+                </div>
+            `;
+        }).join("");
+
+        const balance = document.querySelector("#batch-result-balance");
+        if (balance) {
+            balance.textContent = AtomicApi.formatMoney(user.balance);
+        }
+
+        if (resultType === "success") {
+            document.querySelector("#result-heading").textContent =
+                "All transfers completed.";
+            document.querySelector(".result-copy").textContent =
+                "Every transaction in this batch was confirmed by the backend.";
+        } else {
+            document.querySelector("#result-heading").textContent =
+                "Batch completed with issues.";
+            document.querySelector(".result-copy").textContent =
+                "Completed transfers remain successful; failed rows are identified below.";
+        }
+    }
+
+    async function refreshFromBackend() {
         try {
-            const transactions = await AtomicApi.fetchTransactionsForDebit(user.accountNumber);
-            const verified = AtomicApi.findSubmittedTransaction(
-                transactions,
-                pendingRequest,
-                AtomicApi.transactionId(transaction)
+            const transactions = await AtomicApi.fetchTransactionsForDebit(
+                user.accountNumber
             );
 
-            if (verified) {
-                transaction = verified;
-                AtomicApi.setTransaction(verified);
-            }
+            batch.forEach((item) => {
+                if (!item.transactionId) {
+                    return;
+                }
 
-            const status = Number(transaction.status);
-            if (resultType === "success" && status !== 4) {
-                location.replace(status === 5
-                    ? "/failed.html"
-                    : "/processing.html");
-                return;
-            }
-            if (resultType === "failed" && status !== 5) {
-                location.replace(status === 4
-                    ? "/success.html"
-                    : "/processing.html");
-                return;
-            }
+                const transaction = transactions.find((candidate) =>
+                    String(AtomicApi.transactionId(candidate))
+                    === String(item.transactionId));
 
-            if (status === 4) {
-                user = AtomicApi.applyCompletedDebitToUser(transaction) ?? user;
-            }
+                if (transaction) {
+                    item.transaction = transaction;
+                    item.status = Number(transaction.status);
+                }
+            });
 
-            render();
+            AtomicApi.setPendingBatch(batch);
         } catch (error) {
-            // The stored transaction was itself previously fetched from the backend.
-            // Keep the receipt visible when a subsequent verification request fails.
-            if (Number(transaction.status) === 4) {
-                user = AtomicApi.applyCompletedDebitToUser(transaction) ?? user;
-            }
-            render();
+            // Processing already fetched these statuses. Retain the stored receipt.
+        }
+    }
+
+    async function verifyAndRender() {
+        await refreshFromBackend();
+
+        if (!batch.every(isTerminal)) {
+            location.replace("/processing.html");
+            return;
+        }
+
+        const allCompleted = batch.every((item) => Number(item.status) === 4);
+        if (resultType === "success" && !allCompleted) {
+            location.replace("/failed.html");
+            return;
+        }
+        if (resultType === "failed" && allCompleted) {
+            location.replace("/success.html");
+            return;
+        }
+
+        batch
+            .filter((item) => Number(item.status) === 4 && item.transaction)
+            .forEach((item) => {
+                user = AtomicApi.applyCompletedDebitToUser(item.transaction) || user;
+            });
+
+        if (batch.length === 1) {
+            renderSingle(batch[0]);
+        } else {
+            renderBatch();
         }
     }
 
     bindUtilityActions();
-    verifyTerminalStatus();
+    verifyAndRender();
 })();

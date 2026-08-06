@@ -88,13 +88,97 @@
             <a href="/rules.html">Open rules →</a>
         </section>
 
-        <section class="panel panel--wide" aria-labelledby="recent-heading">
-            <div class="panel__head">
-                <h2 id="recent-heading">Recent transfers</h2>
-                <p id="recent-summary">Loading your latest activity...</p>
+        <section class="dashboard-alerts" aria-labelledby="dashboard-alerts-heading">
+            <div class="history-section__head">
+                <div>
+                    <p class="eyebrow">Live monitoring</p>
+                    <h2 id="dashboard-alerts-heading">Your alerts</h2>
+                    <p>New alerts appear as opened. Select one to acknowledge it.</p>
+                </div>
+                <div class="dashboard-alerts__actions">
+                    <label for="dashboard-alert-filter">Status</label>
+                    <select id="dashboard-alert-filter">
+                        <option value="all">All</option>
+                        <option value="1">Opened</option>
+                        <option value="2">Acknowledged</option>
+                        <option value="3">Closed</option>
+                    </select>
+                    <button class="button button--secondary" id="refresh-alerts" type="button">Refresh</button>
+                    <a class="button button--ghost" href="/alerts.html">Open alert centre</a>
+                </div>
             </div>
-            <div class="panel__body" id="recent-transfers">
-                <p class="form-message">No recent transfers yet.</p>
+
+            <div class="alert-metrics" aria-label="Alert totals">
+                <div><span>Opened</span><strong id="dashboard-alert-opened">0</strong></div>
+                <div><span>Acknowledged</span><strong id="dashboard-alert-acknowledged">0</strong></div>
+                <div><span>Closed</span><strong id="dashboard-alert-closed">0</strong></div>
+            </div>
+
+            <section class="panel dashboard-alert-panel">
+                <div class="panel__head">
+                    <h2>Recent signals</h2>
+                    <p id="dashboard-alert-summary" aria-live="polite">Loading alerts...</p>
+                </div>
+                <div class="panel__body dashboard-alert-list" id="dashboard-alert-list">
+                    <p class="form-message">Checking the monitoring queue...</p>
+                </div>
+            </section>
+        </section>
+
+        <section class="history-section" aria-labelledby="activity-heading">
+            <div class="history-section__head">
+                <div>
+                    <p class="eyebrow">Complete ledger</p>
+                    <h2 id="activity-heading">Your transaction activity</h2>
+                    <p>View every outgoing and incoming transfer, or narrow either list using its calendar.</p>
+                </div>
+                <button class="button button--secondary" id="refresh-history" type="button">Refresh both</button>
+            </div>
+
+            <div class="history-grid">
+                <section class="panel history-panel" aria-labelledby="debit-heading">
+                    <div class="panel__head">
+                        <h2 id="debit-heading">Money sent</h2>
+                        <p id="debit-summary">Loading debited transactions...</p>
+                    </div>
+                    <form class="history-filter" id="debit-filter">
+                        <div class="field">
+                            <label for="debit-from">From date</label>
+                            <input id="debit-from" type="date">
+                        </div>
+                        <div class="field">
+                            <label for="debit-to">To date</label>
+                            <input id="debit-to" type="date">
+                        </div>
+                        <button class="button button--secondary" type="submit">Apply</button>
+                        <button class="button button--ghost" type="button" data-clear-filter="debit">Clear</button>
+                    </form>
+                    <div class="panel__body history-list" id="debit-transfers">
+                        <p class="form-message">No outgoing transactions yet.</p>
+                    </div>
+                </section>
+
+                <section class="panel history-panel" aria-labelledby="credit-heading">
+                    <div class="panel__head">
+                        <h2 id="credit-heading">Money received</h2>
+                        <p id="credit-summary">Loading credited transactions...</p>
+                    </div>
+                    <form class="history-filter" id="credit-filter">
+                        <div class="field">
+                            <label for="credit-from">From date</label>
+                            <input id="credit-from" type="date">
+                        </div>
+                        <div class="field">
+                            <label for="credit-to">To date</label>
+                            <input id="credit-to" type="date">
+                        </div>
+                        <button class="button button--secondary" type="submit">Apply</button>
+                        <button class="button button--ghost" type="button" data-clear-filter="credit">Clear</button>
+                    </form>
+                    <div class="panel__body history-list" id="credit-transfers">
+                        <p class="form-message">No incoming transactions yet.</p>
+                    </div>
+                </section>
             </div>
         </section>
     </div>

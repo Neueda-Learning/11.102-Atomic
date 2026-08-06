@@ -17,7 +17,12 @@
             <p class="result-copy">The request was not completed. You can review the receipt and try again.</p>
         </div>
 
-        <dl class="detail-list result-details">
+        <section class="batch-result" id="batch-result" hidden>
+            <p class="batch-result__summary" id="batch-result-summary"></p>
+            <div class="batch-result-list" id="batch-result-list"></div>
+        </section>
+
+        <dl class="detail-list result-details" id="single-result">
             <div><dt>Transaction reference</dt><dd id="result-id">—</dd></div>
             <div><dt>Amount</dt><dd id="result-amount">—</dd></div>
             <div><dt>From</dt><dd id="result-debit">—</dd></div>

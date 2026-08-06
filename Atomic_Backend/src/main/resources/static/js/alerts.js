@@ -1,100 +1,150 @@
 (function () {
     "use strict";
 
-    const mockAlerts = [
-        { id: 101, title: "High-value transfer", severity: 4, status: 0, alertTime: "2026-08-02T04:15:00+05:30", resolutionTime: null },
-        { id: 102, title: "Unusual transaction hour", severity: 2, status: 1, alertTime: "2026-08-02T03:05:15+05:30", resolutionTime: null },
-        { id: 103, title: "Account velocity threshold", severity: 3, status: 0, alertTime: "2026-08-02T00:55:30+05:30", resolutionTime: null },
-        { id: 104, title: "Blacklisted account match", severity: 4, status: 2, alertTime: "2026-08-01T15:45:23+05:30", resolutionTime: 1200000 },
-        { id: 105, title: "International limit exceeded", severity: 3, status: 1, alertTime: "2026-08-01T14:30:00+05:30", resolutionTime: null },
-        { id: 106, title: "Repeated failed transfers", severity: 2, status: 2, alertTime: "2026-07-31T09:15:00+05:30", resolutionTime: 3600000 }
-    ];
+    const user = AtomicApi.requireUser();
+    if (!user) {
+        return;
+    }
 
-    const statusConfig = {
-        0: ["Open", "danger"],
-        1: ["Acknowledged", "warning"],
-        2: ["Resolved", "success"]
-    };
+    AtomicApi.bindLogout();
 
+    const accountInput = document.querySelector("#alert-account");
+    const statusFilter = document.querySelector("#alert-filter");
+    const ruleFilter = document.querySelector("#alert-rule-filter");
+    const filterForm = document.querySelector("#alert-filter-form");
     const table = document.querySelector("#alert-table");
     const summary = document.querySelector("#alert-summary");
-    const filter = document.querySelector("#alert-filter");
-    const alertSelect = document.querySelector("#alert-id");
-    const alertChartCanvas = document.querySelector("#alert-status-chart");
-    const alertChartEmpty = document.querySelector("#alert-chart-empty");
-    let fetched = false;
+    const refreshButton = document.querySelector("#fetch-alerts");
+    const chartCanvas = document.querySelector("#alert-status-chart");
+    const chartEmpty = document.querySelector("#alert-chart-empty");
+
+    let alerts = [];
+    let rules = new Map();
     let alertChart = null;
+    let currentAccount = String(user.accountNumber);
+    let fetching = false;
+    let closingAlerts = false;
 
-    function alertStatusBadge(status) {
-        const [label, style] = statusConfig[status] ?? ["Unknown", "info"];
-        return `<span class="badge badge--${style}">${label}</span>`;
+    accountInput.value = currentAccount;
+
+    function ruleId(rule) {
+        return rule.alertID ?? rule.alertId ?? rule.alert_id;
     }
 
-    function populateAlertSelect() {
-        alertSelect.innerHTML = mockAlerts.map((alert) => `
-            <option value="${alert.id}">#${alert.id} · ${AtomicUI.escapeHtml(alert.title)}</option>
-        `).join("");
+    function ruleName(rule) {
+        return String(rule.alertName ?? rule.alert_name ?? "Monitoring rule");
     }
 
-    function getFilteredAlerts() {
-        const selectedStatus = filter.value;
-        return selectedStatus === "all"
-            ? mockAlerts
-            : mockAlerts.filter((alert) => String(alert.status) === selectedStatus);
+    function ruleSeverity(rule) {
+        const severity = Number(rule.alertSeverity ?? rule.alert_severity ?? 1);
+        return severity >= 1 && severity <= 4 ? severity : 1;
     }
 
-    function renderAlertChart(alerts) {
-        if (!alertChartCanvas || !alertChartEmpty) {
-            return;
+    function formatTime(value, fallback = "—") {
+        if (!value) {
+            return fallback;
         }
-
-        if (typeof window.Chart !== "function") {
-            alertChartCanvas.hidden = true;
-            alertChartEmpty.hidden = false;
-            alertChartEmpty.textContent = "Chart library is unavailable.";
-            return;
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return fallback;
         }
+        return new Intl.DateTimeFormat("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+        }).format(date);
+    }
 
-        const counts = [0, 0, 0];
-        alerts.forEach((alert) => {
-            if (alert.status >= 0 && alert.status <= 2) {
-                counts[alert.status] += 1;
-            }
-        });
+    function populateRuleFilter() {
+        const selectedRule = ruleFilter.value;
+        const options = Array.from(rules.values())
+            .sort((left, right) => Number(ruleId(left)) - Number(ruleId(right)))
+            .map((rule) => `
+                <option value="${AtomicUI.escapeHtml(String(ruleId(rule)))}">
+                    ${AtomicUI.escapeHtml(ruleName(rule))}
+                </option>
+            `).join("");
 
+        ruleFilter.innerHTML = `<option value="all">All rules</option>${options}`;
+        if (Array.from(ruleFilter.options).some((option) => option.value === selectedRule)) {
+            ruleFilter.value = selectedRule;
+        }
+    }
+
+    function filteredAlerts() {
+        return alerts
+            .filter((alert) => statusFilter.value === "all"
+                || String(alert.status) === statusFilter.value)
+            .filter((alert) => ruleFilter.value === "all"
+                || String(alert.ruleId) === ruleFilter.value)
+            .sort((left, right) => {
+                const timeDifference = new Date(right.alertTime).getTime()
+                    - new Date(left.alertTime).getTime();
+                return Number.isFinite(timeDifference) && timeDifference !== 0
+                    ? timeDifference
+                    : Number(right.ruleId) - Number(left.ruleId);
+            });
+    }
+
+    function updateMetrics() {
+        document.querySelector("#alert-opened-count").textContent = String(
+            alerts.filter((alert) => Number(alert.status) === 1).length
+        );
+        document.querySelector("#alert-acknowledged-count").textContent = String(
+            alerts.filter((alert) => Number(alert.status) === 2).length
+        );
+        document.querySelector("#alert-closed-count").textContent = String(
+            alerts.filter((alert) => Number(alert.status) === 3).length
+        );
+    }
+
+    function chartColours() {
+        return document.documentElement.dataset.colourMode === "accessible"
+            ? ["#d55e00", "#e69f00", "#009e73"]
+            : ["#a53b3b", "#9a5f08", "#0b655b"];
+    }
+
+    function renderChart(visibleAlerts) {
+        const counts = [1, 2, 3].map((status) =>
+            visibleAlerts.filter((alert) => Number(alert.status) === status).length);
         const total = counts.reduce((sum, count) => sum + count, 0);
-        if (total === 0) {
+
+        if (typeof window.Chart !== "function" || total === 0) {
             if (alertChart) {
                 alertChart.destroy();
                 alertChart = null;
             }
-            alertChartCanvas.hidden = true;
-            alertChartEmpty.hidden = false;
-            alertChartEmpty.textContent = "No chart data available yet.";
+            chartCanvas.hidden = true;
+            chartEmpty.hidden = false;
+            chartEmpty.textContent = total
+                ? "The chart library is unavailable."
+                : "No alert data matches these filters.";
             return;
         }
 
-        alertChartCanvas.hidden = false;
-        alertChartEmpty.hidden = true;
+        chartCanvas.hidden = false;
+        chartEmpty.hidden = true;
 
         if (!alertChart) {
-            alertChart = new window.Chart(alertChartCanvas, {
-                type: "pie",
+            alertChart = new window.Chart(chartCanvas, {
+                type: "doughnut",
                 data: {
-                    labels: ["Open", "Acknowledged", "Resolved"],
+                    labels: ["Opened", "Acknowledged", "Closed"],
                     datasets: [{
                         data: counts,
-                        backgroundColor: ["#a53b3b", "#9a5f08", "#0b655b"],
+                        backgroundColor: chartColours(),
                         borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    cutout: "62%",
                     plugins: {
-                        legend: {
-                            position: "bottom"
-                        }
+                        legend: { position: "bottom" }
                     }
                 }
             });
@@ -102,100 +152,162 @@
         }
 
         alertChart.data.datasets[0].data = counts;
+        alertChart.data.datasets[0].backgroundColor = chartColours();
         alertChart.update();
     }
 
-    function renderAlertsTable(alerts) {
-        summary.innerHTML = `<strong>${alerts.length}</strong> of ${mockAlerts.length} alerts shown`;
+    function renderAlertQueue(visibleAlerts) {
+        summary.textContent = `${visibleAlerts.length} of ${alerts.length} alert${alerts.length === 1 ? "" : "s"} shown for account ${currentAccount}.`;
 
-        if (!alerts.length) {
+        if (!visibleAlerts.length) {
             table.innerHTML = `
                 <div class="empty-state">
                     <div>
                         <span class="empty-state__mark">0</span>
-                        <h3>No alerts in this status</h3>
-                        <p>Select another filter to see the rest of the queue.</p>
+                        <h3>No alerts match these filters</h3>
+                        <p>Try another account, status, or rule.</p>
                     </div>
                 </div>
             `;
             return;
         }
 
-        const rows = alerts.map((alert) => `
-            <tr>
-                <td class="cell-strong">#${alert.id}</td>
-                <td class="cell-strong">${AtomicUI.escapeHtml(alert.title)}</td>
-                <td><span class="severity severity--${alert.severity}">${alert.severity}</span></td>
-                <td>${alertStatusBadge(alert.status)}</td>
-                <td>${AtomicUI.formatDate(alert.alertTime)}</td>
-                <td>${alert.resolutionTime ? `${Math.round(alert.resolutionTime / 60000)} min` : "—"}</td>
-            </tr>
-        `).join("");
-
         table.innerHTML = `
-            <div class="table-wrap">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Alert ID</th>
-                            <th>Signal</th>
-                            <th>Severity</th>
-                            <th>Status</th>
-                            <th>Detected</th>
-                            <th>Resolution</th>
-                        </tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>
+            <div class="alert-card-list">
+                ${visibleAlerts.map((alert) => {
+                    const rule = rules.get(String(alert.ruleId));
+                    const status = AtomicApi.alertStatusInfo(alert.status);
+                    const severity = rule ? ruleSeverity(rule) : 1;
+                    const opened = Number(alert.status) === 1;
+                    const key = encodeURIComponent(AtomicApi.alertKey(alert));
+
+                    return `
+                        <button class="alert-card ${opened ? "alert-card--actionable" : ""}"
+                                type="button" data-alert-key="${key}"
+                                ${opened ? "" : "disabled"}>
+                            <span class="severity severity--${severity}" aria-label="Severity ${severity}">${severity}</span>
+                            <span class="alert-card__main">
+                                <strong>${AtomicUI.escapeHtml(rule ? ruleName(rule) : `Rule #${alert.ruleId}`)}</strong>
+                                <small>Rule #${AtomicUI.escapeHtml(String(alert.ruleId ?? "—"))} · Account ${AtomicUI.escapeHtml(alert.accountNumber || currentAccount)}</small>
+                                <small>Detected ${AtomicUI.escapeHtml(formatTime(alert.alertTime, "at an unknown time"))}</small>
+                            </span>
+                            <span class="alert-card__status">
+                                <span class="badge badge--${status.className}">${status.label}</span>
+                                <small>${opened ? "Select to acknowledge" : Number(alert.status) === 2 ? "Closes when this page is left" : `Closed ${AtomicUI.escapeHtml(formatTime(alert.resolutionTime))}`}</small>
+                            </span>
+                        </button>
+                    `;
+                }).join("")}
             </div>
         `;
     }
 
-    function syncAlertsView() {
-        if (!fetched) {
-            return;
-        }
-        const alerts = getFilteredAlerts();
-        renderAlertsTable(alerts);
-        renderAlertChart(alerts);
+    function render() {
+        const visibleAlerts = filteredAlerts();
+        updateMetrics();
+        renderChart(visibleAlerts);
+        renderAlertQueue(visibleAlerts);
     }
 
-    document.querySelector("#fetch-alerts").addEventListener("click", (event) => {
-        AtomicUI.setButtonLoading(event.currentTarget, true, "Fetching…");
-        window.setTimeout(() => {
-            fetched = true;
-            syncAlertsView();
-            AtomicUI.setButtonLoading(event.currentTarget, false);
-            AtomicUI.showToast("Alerts fetched", `${mockAlerts.length} mock alerts loaded.`);
-        }, 350);
-    });
-
-    filter.addEventListener("change", syncAlertsView);
-
-    document.querySelector("#alert-update-form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const button = document.querySelector("#update-alert");
-        const alertId = Number(alertSelect.value);
-        const newStatus = Number(document.querySelector("#alert-status").value);
-        const alert = mockAlerts.find((record) => record.id === alertId);
+    async function loadAlerts(showLoading = false) {
+        if (fetching) {
+            return;
+        }
+        fetching = true;
+        if (showLoading) {
+            AtomicUI.setButtonLoading(refreshButton, true, "Refreshing…");
+        }
 
         try {
-            AtomicUI.setButtonLoading(button, true, "Updating…");
-            const params = new URLSearchParams({ alertId: String(alertId), status: String(newStatus) });
-            await AtomicUI.request(`/home/alert/update?${params}`, { method: "POST" });
-            alert.status = newStatus;
-            if (newStatus === 2 && !alert.resolutionTime) {
-                alert.resolutionTime = Date.now() - new Date(alert.alertTime).getTime();
+            const [fetchedAlerts, fetchedRules] = await Promise.all([
+                AtomicApi.fetchAlerts(currentAccount),
+                rules.size ? Promise.resolve([]) : AtomicApi.fetchAlertRules()
+            ]);
+            alerts = fetchedAlerts;
+            if (fetchedRules.length) {
+                rules = new Map(fetchedRules.map((rule) => [String(ruleId(rule)), rule]));
+                populateRuleFilter();
             }
-            fetched = true;
-            syncAlertsView();
-            AtomicUI.showToast("Alert updated", `Alert #${alertId} is now ${statusConfig[newStatus][0].toLowerCase()}.`);
+            render();
         } catch (error) {
-            AtomicUI.showToast("Update failed", error.message, "error");
+            summary.textContent = "Alerts could not be loaded.";
+            table.innerHTML = `
+                <div class="empty-state">
+                    <div>
+                        <span class="empty-state__mark">!</span>
+                        <h3>Could not reach the alert service</h3>
+                        <p>Refresh the page or try again in a moment.</p>
+                    </div>
+                </div>
+            `;
         } finally {
-            AtomicUI.setButtonLoading(button, false);
+            fetching = false;
+            if (showLoading) {
+                AtomicUI.setButtonLoading(refreshButton, false);
+            }
+        }
+    }
+
+    table.addEventListener("click", async (event) => {
+        const card = event.target.closest("[data-alert-key]");
+        if (!card || card.disabled) {
+            return;
+        }
+
+        const key = decodeURIComponent(card.dataset.alertKey);
+        const index = alerts.findIndex((alert) => AtomicApi.alertKey(alert) === key);
+        if (index < 0 || Number(alerts[index].status) !== 1) {
+            return;
+        }
+
+        card.disabled = true;
+        summary.textContent = "Acknowledging the selected alert…";
+        try {
+            alerts[index] = await AtomicApi.acknowledgeAlert(alerts[index]);
+            render();
+            AtomicUI.showToast("Alert acknowledged", "The alert will close when you leave this page.");
+        } catch (error) {
+            card.disabled = false;
+            summary.textContent = error.message || "The alert could not be acknowledged.";
+            AtomicUI.showToast("Acknowledgement failed", summary.textContent, "error");
         }
     });
 
-    populateAlertSelect();
+    accountInput.addEventListener("input", () => {
+        accountInput.value = accountInput.value.replace(/\D+/g, "");
+    });
+
+    filterForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!accountInput.value) {
+            accountInput.focus();
+            return;
+        }
+        const nextAccount = accountInput.value;
+        if (nextAccount !== currentAccount) {
+            currentAccount = nextAccount;
+            void loadAlerts(true);
+            return;
+        }
+        render();
+    });
+
+    statusFilter.addEventListener("change", render);
+    ruleFilter.addEventListener("change", render);
+    refreshButton.addEventListener("click", () => loadAlerts(true));
+    document.addEventListener("atomic:colour-mode-change", render);
+
+    window.addEventListener("pagehide", () => {
+        if (closingAlerts) {
+            return;
+        }
+        closingAlerts = true;
+        alerts = alerts.map((alert) =>
+            Number(alert.status) === 2
+                ? AtomicApi.closeAlertKeepalive(alert)
+                : alert);
+    });
+
+    void loadAlerts();
+    window.setInterval(() => loadAlerts(false), 8_000);
 })();

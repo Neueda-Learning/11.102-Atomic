@@ -1,19 +1,23 @@
 package com.example.Atomic.Controller;
 
+import com.example.Atomic.Model.Alert;
 import com.example.Atomic.Model.Rules;
 import com.example.Atomic.Model.Transactions;
 import com.example.Atomic.Model.User;
+import com.example.Atomic.Service.AlertProcessing;
 import com.example.Atomic.Service.RulesProcessing;
 import com.example.Atomic.Service.TransactionCreation;
 import com.example.Atomic.Service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +31,8 @@ public class SuperController {
     RulesProcessing  rules;
     @Autowired
     UserService user;
+    @Autowired
+    AlertProcessing alert;
 
     // post transaction
     @PostMapping("/transaction/submit")
@@ -41,6 +47,42 @@ public class SuperController {
 
         trans.submitTransaction(debit_account_number, credit_account_number, amount);
         return ResponseEntity.ok("Transaction processed successfully!");
+    }
+
+    // schedule a transaction for later processing
+    @PostMapping("/transaction/schedule")
+    public ResponseEntity<String> scheduleTransaction(
+            @SessionAttribute(name = SuperController.LOGGED_IN_ACCOUNT, required = false)
+            Long debitAccountNumber,
+            @RequestParam long credit_account_number,
+            @RequestParam double amount,
+            @RequestParam("processing_time")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            Instant processingTime) {
+
+        if (debitAccountNumber == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Login required. Please sign in again.");
+        }
+
+        Transactions transaction = trans.scheduleTransaction(
+                debitAccountNumber,
+                credit_account_number,
+                amount,
+                processingTime
+        );
+
+        if (transaction.getStatus() == 5) {
+            return ResponseEntity.badRequest().body(
+                    "Transaction ID: " + transaction.getTransID()
+                            + " failed because processing time must be at least one minute later."
+            );
+        }
+
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(
+                "Transaction ID: " + transaction.getTransID()
+                        + " scheduled for " + transaction.getTimeDate()
+        );
     }
 
     // fetch transaction details By Debit Account Number
@@ -121,6 +163,36 @@ public class SuperController {
                          String email, String password) {
         user.createUser(balance, firstName, lastName, email, password);
         return "User Signup successful!";
+    }
+
+    // fetch all alerts
+    @GetMapping("/rules/alerts")
+    public List<Alert> getAlerts(@RequestParam long accountId) {
+        return alert.getAllAlerts(accountId);
+    }
+
+    // fetch all alerts by status
+    @GetMapping("/home/alerts/status")
+    public List<Alert> getAlertsByStatus(@RequestParam long accountId, @RequestParam int status) {
+        return alert.getAllAlertsByStatus(accountId, status);
+    }
+
+    // fetch all alerts by their rule id
+    @GetMapping("/home/alerts/rule_id")
+    public List<Alert> getAlertsByRuleId(@RequestParam long accountId, @RequestParam long ruleId) {
+        return alert.getAllAlertsByRuleId(accountId, ruleId);
+    }
+
+    //for acknowledging the alert
+    @GetMapping("/home/alerts/acknowledge")
+    public String AlertAcknowledge(Alert alerts) {
+        return alert.acknowledgeAlert(alerts);
+    }
+
+    //for closing the alert
+    @GetMapping("/home/alerts/close")
+    public String AlertClosed(Alert alerts) {
+        return alert.closeAlert(alerts);
     }
 
     // LOGIN

@@ -13,6 +13,8 @@ public class TransactionProcessing {
     TransactionsRepo trans;
     @Autowired
     UserRepo user;
+    @Autowired
+    AlertProcessing alertProcessing;
 
     public String processTransaction(Transactions transaction) {
 
@@ -40,6 +42,7 @@ public class TransactionProcessing {
 
         transaction.setStatus(4);
         trans.save(transaction);
+        alertProcessing.generateAlert(transaction.getDebitAccountNumber(), 0);
         return "Transaction processed successfully!";
     }
 }

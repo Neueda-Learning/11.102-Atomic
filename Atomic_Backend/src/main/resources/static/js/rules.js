@@ -70,6 +70,12 @@
             : rules.filter((rule) => String(rule.status) === selectedStatus);
     }
 
+    function ruleChartColours() {
+        return document.documentElement.dataset.colourMode === "accessible"
+            ? ["#009e73", "#0072b2", "#e69f00", "#d55e00"]
+            : ["#0b655b", "#245d86", "#9a5f08", "#a53b3b"];
+    }
+
     function renderRuleChart(visibleRules) {
         if (!ruleChartCanvas || !ruleChartEmpty) {
             return;
@@ -112,7 +118,7 @@
                     datasets: [{
                         label: "Rules",
                         data: counts,
-                        backgroundColor: ["#0b655b", "#245d86", "#9a5f08", "#a53b3b"],
+                        backgroundColor: ruleChartColours(),
                         borderWidth: 1
                     }]
                 },
@@ -138,6 +144,7 @@
         }
 
         ruleChart.data.datasets[0].data = counts;
+        ruleChart.data.datasets[0].backgroundColor = ruleChartColours();
         ruleChart.update();
     }
 
@@ -226,6 +233,7 @@
 
     document.querySelector("#fetch-rules").addEventListener("click", () => fetchRules(true));
     filter.addEventListener("change", syncRulesView);
+    document.addEventListener("atomic:colour-mode-change", syncRulesView);
     ruleSelect.addEventListener("change", syncFormToRule);
 
     document.querySelector("#rule-update-form").addEventListener("submit", async (event) => {
