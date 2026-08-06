@@ -15,6 +15,14 @@ import java.util.List;
 
 @Service
 public class AlertProcessing {
+
+    // Hardcoded thresholds for each rule (no threshold field exists in Rules model)
+    private static final double RULE1_HIGH_VALUE_THRESHOLD = 10000.0;   // alert if single transaction > $10,000
+    private static final int    RULE2_VELOCITY_THRESHOLD   = 5;         // alert if more than 5 transactions in last 5 minutes
+    private static final int    RULE3_NIGHT_TX_THRESHOLD   = 3;         // alert if more than 3 night-time transactions (12AM-6AM)
+    private static final double RULE4_DAILY_LIMIT          = 50000.0;   // alert if daily total exceeds $50,000
+    private static final int    RULE6_FAILED_TX_LIMIT      = 3;         // alert if more than 3 failed transactions today
+
     @Autowired
     AlertRepo alert;
     @Autowired
@@ -33,32 +41,44 @@ public class AlertProcessing {
         List<Rules> activeRules = rules.findAllByAlertStatusEquals(1);
         List<Alert> generatedAlerts = new ArrayList<>();
 
-        Rules rule6 = activeRules.stream().
-                filter(obj -> "Multiple Failed Transactions ".equals(obj.getAlertName())).
-                findFirst().orElse(null);
+        Rules rule6 = activeRules.stream()
+                .filter(obj -> "Multiple Failed Transactions ".equals(obj.getAlertName()))
+                .findFirst()
+                .orElse(null);
 
         if (rule6 != null) {
             boolean checkAlert = false;
-            // logic to check if the alert should be generated or not
-            // transaction from blacklisted account logic
-            long[] blacklistedAccounts = {9999999999L, 8888888888L, 7777777777L};
+
+            // very simple logic: count today's failed transactions and compare with rule limit
+            java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneId.systemDefault());
+            int failedTransactionCount = 0;
+
             for (Transactions transaction : transactions) {
-                long debitAccount = transaction.getDebitAccountNumber();
-                for (long blockedAccount : blacklistedAccounts) {
-                    if (debitAccount == blockedAccount) {
-                        checkAlert = true;
-                        break;
+                if (transaction.getTimeDate() != null) {
+                    java.time.LocalDate txDate = transaction.getTimeDate()
+                            .atZone(java.time.ZoneId.systemDefault())
+                            .toLocalDate();
+
+                    // status 5 means failed (as per Transactions model comment)
+                    if (today.equals(txDate) && transaction.getStatus() == 5) {
+                        failedTransactionCount = failedTransactionCount + 1;
                     }
                 }
             }
+
+            if (failedTransactionCount > RULE6_FAILED_TX_LIMIT) {
+                checkAlert = true;
+            }
+
             // Generate alert
-            if(checkAlert == true) {
+            if (checkAlert == true) {
                 totalSeverity += rule6.getAlertSeverity();
                 Alert newAlert = new Alert(accountNumber, rule6.getAlertID(), 1, Instant.now(), null);
                 alert.save(newAlert);
                 generatedAlerts.add(newAlert);
             }
         }
+
         return generatedAlerts;
     }
 
@@ -97,7 +117,7 @@ public class AlertProcessing {
             // logic to check if the alert should be generated or not
             //high value transaction detection logic
             for(Transactions transaction : transactions) {
-                if(transaction.getAmount() > rule1.getAlertThreshold()) {
+                if(transaction.getAmount() > RULE1_HIGH_VALUE_THRESHOLD) {
                     checkAlert = true;
                     transStore1.add(transaction);
                 }
@@ -122,7 +142,7 @@ public class AlertProcessing {
                     .filter(transaction -> transaction.getTimeDate() != null)
                     .filter(transaction -> transaction.getTimeDate().isAfter(fiveMinutesAgo))
                     .count();
-            if(count > rule2.getAlertThreshold()) {
+            if(count > RULE2_VELOCITY_THRESHOLD) {
                 checkAlert = true;
                 for (Transactions transaction : transactions) {
                     if (transaction.getTimeDate() != null && transaction.getTimeDate().isAfter(fiveMinutesAgo)) {
@@ -157,7 +177,7 @@ public class AlertProcessing {
                 }
             }
 
-            if(suspiciousTransaction > rule3.getAlertThreshold()) {
+            if(suspiciousTransaction > RULE3_NIGHT_TX_THRESHOLD) {
                 checkAlert = true;
             }
 
@@ -190,7 +210,7 @@ public class AlertProcessing {
                 }
             }
 
-            if (totalTodayAmount > rule4.getAlertThreshold()) {
+            if (totalTodayAmount > RULE4_DAILY_LIMIT) {
                 checkAlert = true;
             }
 
@@ -208,7 +228,45 @@ public class AlertProcessing {
             boolean checkAlert = false;
             // logic to check if the alert should be generated or not
             // new payee detection logic:
+            // Step 1: Find the most recent transaction (the one just submitted)
+            Transactions latestTransaction = null;
+            for (Transactions transaction : transactions) {
+                if (latestTransaction == null) {
+                    latestTransaction = transaction;
+                } else {
+                    if (transaction.getTimeDate() != null && latestTransaction.getTimeDate() != null) {
+                        if (transaction.getTimeDate().isAfter(latestTransaction.getTimeDate())) {
+                            latestTransaction = transaction;
+                        }
+                    }
+                }
+            }
 
+            // Step 2: If we found a latest transaction, check if its credit account number
+            // has ever appeared in any previous transaction
+            if (latestTransaction != null) {
+                long newPayeeAccountNumber = latestTransaction.getCreditAccountNumber();
+                boolean seenBefore = false;
+
+                // Step 3: Loop through all transactions and check if this credit account was used before
+                for (Transactions transaction : transactions) {
+                    // Skip the latest transaction itself - we only want to compare against older ones
+                    if (transaction.getTransID() == latestTransaction.getTransID()) {
+                        continue;
+                    }
+                    // Check if this older transaction was sent to the same credit account
+                    if (transaction.getCreditAccountNumber() == newPayeeAccountNumber) {
+                        seenBefore = true;
+                        break;
+                    }
+                }
+
+                // Step 4: If not seen before, it means this is a brand new payee - trigger the alert
+                if (seenBefore == false) {
+                    checkAlert = true;
+                    transStore5.add(latestTransaction);
+                }
+            }
 
             // Generate alert
             if(checkAlert == true) {
@@ -220,16 +278,8 @@ public class AlertProcessing {
         }
         if(rule6 != null)
         {
-            boolean checkAlert = false;
-
-
-            // Generate alert
-            if(checkAlert == true) {
-                totalSeverity += rule6.getAlertSeverity();
-                Alert newAlert = new Alert(accountNumber, rule6.getAlertID(), 1, Instant.now(), null);
-                alert.save(newAlert);
-                generatedAlerts.add(newAlert);
-            }
+            List<Alert> rule6Alerts = generateAlert6(accountNumber, totalSeverity);
+            generatedAlerts.addAll(rule6Alerts);
         }
         return generatedAlerts;
     }
